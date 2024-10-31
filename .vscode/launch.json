@@ -1,0 +1,75 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "ServerInfoApplication",
+            "request": "launch",
+            "mainClass": "com.monster.server_info.ServerInfoApplication"
+        },
+        {
+            "type": "java",
+            "name": "EureckaServerApplication",
+            "request": "launch",
+            "mainClass": "com.monster.eurecka_server.EureckaServerApplication"
+        },
+        {
+            "type": "java",
+            "name": "ServerInformationApplication",
+            "request": "launch",
+            "mainClass": "com.monster.server_information.ServerInformationApplication",
+            "projectName": "server-information",
+            "vmArgs": " -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=53886 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dspring.jmx.enabled=true -Djava.rmi.server.hostname=localhost -Dspring.application.admin.enabled=true -Dspring.boot.project.name=server-information"
+        },
+        {
+            "type": "java",
+            "name": "ServerAdministratorApplication",
+            "request": "launch",
+            "mainClass": "com.monster.server_administrator.ServerAdministratorApplication",
+            "projectName": "server-administrator",
+            "vmArgs": " -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=55292 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dspring.jmx.enabled=true -Djava.rmi.server.hostname=localhost -Dspring.application.admin.enabled=true -Dspring.boot.project.name=server-administrator"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-ServerConfigurationApplication<server-configuration>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.monster.server_configuration.ServerConfigurationApplication",
+            "projectName": "server-configuration",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env",
+            "vmArgs": " -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=63036 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dspring.jmx.enabled=true -Djava.rmi.server.hostname=localhost -Dspring.application.admin.enabled=true -Dspring.boot.project.name=server-configuration"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-GatewayApplication<gateway>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.monster.gateway.GatewayApplication",
+            "projectName": "gateway",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env",
+            "vmArgs": " -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=54455 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dspring.jmx.enabled=true -Djava.rmi.server.hostname=localhost -Dspring.application.admin.enabled=true -Dspring.boot.project.name=gateway"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-GatewayApplication<gateway>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.monster.gateway.gateway.GatewayApplication",
+            "projectName": "gateway",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env",
+            "vmArgs": " -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=50839 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dspring.jmx.enabled=true -Djava.rmi.server.hostname=localhost -Dspring.application.admin.enabled=true -Dspring.boot.project.name=gateway"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-WebPageApplication<web-page>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.monster.web_page.WebPageApplication",
+            "projectName": "web-page",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}
