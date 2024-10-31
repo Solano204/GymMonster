@@ -36,7 +36,6 @@ import infraestrucutre.Adapters.Drivens.DTOS.DtoTrainerReciving;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoTrainerSent;
 import infraestrucutre.Adapters.Drivens.Entities.AllClient;
 import infraestrucutre.Adapters.Drivens.Entities.WorkClass;
-import infraestrucutre.Adapters.Drivens.Mappers.Mappersito;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.AllArgsConstructor;

@@ -15,7 +15,6 @@ import infraestrucutre.Adapters.Drivens.DTOS.DtoSpecialtyRecived;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoSpecialtySent;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoTrainerData;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoTrainerReciving;
-import infraestrucutre.Adapters.Drivens.Mappers.Mappersito;
 import lombok.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;

@@ -13,7 +13,6 @@ import infraestrucutre.Adapters.Drivens.Entities.AllClient;
 import infraestrucutre.Adapters.Drivens.Entities.Client;
 import infraestrucutre.Adapters.Drivens.Entities.DetailUser;
 import infraestrucutre.Adapters.Drivens.ImpServices.ClientService;
-import infraestrucutre.Adapters.Drivens.Mappers.Mappersito;
 import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
 import java.util.*;

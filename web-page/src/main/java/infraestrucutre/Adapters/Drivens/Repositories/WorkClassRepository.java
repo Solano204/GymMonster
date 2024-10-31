@@ -11,7 +11,6 @@ import infraestrucutre.Adapters.Drivens.DTOS.DtoDetailUserReciving;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoDetailUserSent;
 import infraestrucutre.Adapters.Drivens.Entities.Schedule;
 import infraestrucutre.Adapters.Drivens.Entities.WorkClass;
-import infraestrucutre.Adapters.Drivens.Mappers.Mappersito;
 import lombok.*;
 import reactor.core.publisher.Flux;
 
@@ -49,8 +48,7 @@ public class WorkClassRepository implements WorkClassRepositoryInterface {
                     .build(Collections.singletonMap("name", className)))  // Dynamically pass class name
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
-                .bodyToFlux(DtoDetailUserSent.class)
-                .map(Mappersito.INSTANCE::toDtoDetailUserReciving);
+                .bodyToFlux(DtoDetailUserReciving.class);
     }
 
 
@@ -68,9 +66,8 @@ public class WorkClassRepository implements WorkClassRepositoryInterface {
                     .build(Collections.singletonMap("name", name)))  // Dynamically pass class name
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
-                .bodyToFlux(DtoDetailUserSent.class)
-                .map(Mappersito.INSTANCE::toDtoDetailUserReciving);
-    }
+                .bodyToFlux(DtoDetailUserReciving.class);
+                }
     
 
 

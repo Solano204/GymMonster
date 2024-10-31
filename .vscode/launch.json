@@ -2,6 +2,12 @@
     "configurations": [
         {
             "type": "java",
+            "name": "ServerInfoApplication",
+            "request": "launch",
+            "mainClass": "com.monster.server_info.ServerInfoApplication"
+        },
+        {
+            "type": "java",
             "name": "EureckaServerApplication",
             "request": "launch",
             "mainClass": "com.monster.eurecka_server.EureckaServerApplication"

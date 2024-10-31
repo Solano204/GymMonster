@@ -7,7 +7,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import application.Ports.Drivens.InterfaceRepositories.PoolRepositoryInterface;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoPoolReciving;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoPoolSent;
-import infraestrucutre.Adapters.Drivens.Mappers.Mappersito;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -29,8 +28,7 @@ public class PoolRepository implements PoolRepositoryInterface {
                 .uri("http://localhost:8111/api/pools")
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
-                .bodyToFlux(DtoPoolSent.class)
-                .map(Mappersito.INSTANCE::toDtoPoolReciving);
+                .bodyToFlux(DtoPoolReciving.class);
     }
 
 }

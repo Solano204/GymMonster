@@ -8,7 +8,6 @@ import application.Ports.Drivens.InterfaceRepositories.MembershipRepositoryInter
 import application.Ports.Drivers.IServices.MembershipInterface;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoMembershipReciving;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoMembershipSent;
-import infraestrucutre.Adapters.Drivens.Mappers.Mappersito;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import reactor.core.publisher.Flux;
@@ -28,7 +27,6 @@ public class MembershipRepository implements MembershipRepositoryInterface {
             .uri("http://localhost:8111/api/memberships")
             .accept(MediaType.APPLICATION_JSON)
             .retrieve()
-            .bodyToFlux(DtoMembershipSent.class)
-            .map(Mappersito.INSTANCE::toDtoMembershipReciving);
-}   
+            .bodyToFlux(DtoMembershipReciving.class);
+        }   
 }
