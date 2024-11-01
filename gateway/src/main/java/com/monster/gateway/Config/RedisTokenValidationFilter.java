@@ -17,9 +17,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.monster.gateway.Entities.Token;
 import com.monster.gateway.InterfaceServices.RedisHandlerInterface;
 import com.monster.gateway.InterfaceServices.Session;
+import com.monster.gateway.PropertiesUrl.ServicesUrl;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.http.HttpStatus;
@@ -34,6 +37,9 @@ import java.time.Instant;
 @AllArgsConstructor
 public class RedisTokenValidationFilter implements GlobalFilter, Ordered {
 
+
+  
+
     private final ReactiveRedisTemplate<String, String> redisTemplate;
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
@@ -42,6 +48,7 @@ public class RedisTokenValidationFilter implements GlobalFilter, Ordered {
     private static final Set<String> EXCLUDED_PATHS = Set.of("GymMonster/auth/login", "GymMonster/auth/logout");
 
     private final RedisHandlerInterface redisHandler;
+    private final ServicesUrl servicesUrl;
 
     private static final Logger logger = LoggerFactory.getLogger(RedisTokenValidationFilter.class);
 
@@ -160,10 +167,10 @@ public class RedisTokenValidationFilter implements GlobalFilter, Ordered {
 
         if (refreshToken != null) {
             return webClient.post()
-                    .uri("http://localhost:8181/realms/docker-real/protocol/openid-connect/token")
+                    .uri(servicesUrl.getKeycloak().getUrl()+"/realms/docker-real/protocol/openid-connect/token")
                     .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                    .body(BodyInserters.fromFormData("client_id", "Docker-Gym")
-                            .with("client_secret", "ckdP5Vf6X5laZN16wm1xGIXGLZXrDC8p")
+                    .body(BodyInserters.fromFormData("client_id", servicesUrl.getKeycloak().getClientId())
+                            .with("client_secret", servicesUrl.getKeycloak().getClientSecret())
                             .with("grant_type", "refresh_token")
                             .with("refresh_token", refreshToken))
                     .retrieve()

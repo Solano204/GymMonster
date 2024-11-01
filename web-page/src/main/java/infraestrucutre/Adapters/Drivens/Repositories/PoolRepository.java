@@ -7,6 +7,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import application.Ports.Drivens.InterfaceRepositories.PoolRepositoryInterface;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoPoolReciving;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoPoolSent;
+import infraestrucutre.Adapters.Drivens.Properties.ServicesUrl;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,6 +19,7 @@ import reactor.core.publisher.Flux;
 public class PoolRepository implements PoolRepositoryInterface {
 
     private final WebClient.Builder webClientBuilder;
+        private final ServicesUrl servicesUrl;
 
 
     @Override
@@ -25,7 +27,7 @@ public class PoolRepository implements PoolRepositoryInterface {
         return this.webClientBuilder.build()
                 .get()
                 //.uri("lb://pool-service/api/pools")
-                .uri("http://localhost:8111/api/pools")
+                    .uri( servicesUrl.getInfo().getUrl() + "/api/pools")
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .bodyToFlux(DtoPoolReciving.class);

@@ -1,4 +1,5 @@
 package infraestrucutre.Adapters.Drivens.Configurations;
+import java.security.Provider.Service;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,19 +16,21 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 import infraestrucutre.Adapters.Drivens.Entities.AllClient;
+import infraestrucutre.Adapters.Drivens.Properties.ServicesUrl;
+import lombok.Data;
 
  @Configuration
+ @Data
  public class KafkaProducerConfig {
 	
- @Value("${spring.kafka.bootstrapAddress}")
- private String bootstrapAddress;
+  private final ServicesUrl servicesUrl;
 	
  @Bean
  public ProducerFactory<String, AllClient> producerFactory() {
   Map<String, Object> configProps = new HashMap<>();
   configProps.put(
     ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, 
-    "localhost:29092");
+    servicesUrl.getKafka().getBootstrapAddress());
     configProps.put(
       ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, 
       StringSerializer.class);

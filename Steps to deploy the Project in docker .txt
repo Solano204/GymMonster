@@ -1,0 +1,30 @@
+
+-- FIRST CREATE THE IMAGE
+docker build -t eurecka-server:v1 . -f .\eurecka\Dockerfile
+docker build -t gateway-server:v1 . -f ./gateway/Dockerfile
+docker build -t server-administrator:v1 . -f ./server-administrator/Dockerfile
+docker build -t server-configuration:v1 . -f ./server-configuration/Dockerfile
+docker build -t server-information:v1 . -f ./server-information/Dockerfile
+docker build -t server-register:v1 . -f ./server-register/Dockerfile
+docker build -t web-page:v1 . -f ./web-page/Dockerfile
+
+
+--SECOND TAG THE IMAGES
+docker tag server-configuration:v1 joshua76i/config-server-pr2:latest
+docker tag eurecka-server:v1 joshua76i/eurecka-project2:latest
+docker tag gateway-server:v1 joshua76i/gateway-project2:latest
+docker tag server-administrator:v1 joshua76i/server-administrator-pr2:latest
+docker tag server-information:v1 joshua76i/server-information-pr2:latest
+docker tag server-register:v1 joshua76i/server-register-pr2:latest
+docker tag web-page:v1 joshua76i/web-page-pr2:latest
+
+
+
+docker push joshua76i/eurecka-pr2:latest
+docker push joshua76i/config-server-pr2:latest
+docker push joshua76i/gateway-project2:latest
+docker push joshua76i/server-administrator-pr2:latest
+docker push joshua76i/server-information-pr2:latest
+docker push joshua76i/server-register-pr2:latest
+docker push joshua76i/web-page-pr2:latest
+

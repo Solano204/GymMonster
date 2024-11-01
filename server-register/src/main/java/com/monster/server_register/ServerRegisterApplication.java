@@ -10,6 +10,7 @@ import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
 @EnableR2dbcRepositories(basePackages = "infraestrucutre")
 public class ServerRegisterApplication {
 
+	
 	public static void main(String[] args) {
 		SpringApplication.run(ServerRegisterApplication.class, args);
 	}

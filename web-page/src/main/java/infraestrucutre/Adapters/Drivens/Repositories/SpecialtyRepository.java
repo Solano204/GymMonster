@@ -9,6 +9,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import application.Ports.Drivens.InterfaceRepositories.SpecialtyRepositoryInterface;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoSpecialtyRecived;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoSpecialtySent;
+import infraestrucutre.Adapters.Drivens.Properties.ServicesUrl;
 import lombok.*;
 import reactor.core.publisher.Flux;
 
@@ -18,6 +19,8 @@ import reactor.core.publisher.Flux;
 public class SpecialtyRepository implements SpecialtyRepositoryInterface{
     
         private final WebClient.Builder webClientBuilder;
+               private final ServicesUrl servicesUrl;
+
         
 
         @Override
@@ -26,7 +29,7 @@ public class SpecialtyRepository implements SpecialtyRepositoryInterface{
                 .get()
                 // .uri("lb://specialty-service/api/pertrainers/{username}/specialties",
                 // Collections.singletonMap("username", username))
-                .uri("http://localhost:8111/api/specialties")
+                .uri(servicesUrl.getInfo().getUrl() + "/api/specialties")
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .bodyToFlux(DtoSpecialtyRecived.class);
