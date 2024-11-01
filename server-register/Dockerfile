@@ -3,7 +3,6 @@ FROM openjdk:23-ea-21-jdk as builder
 WORKDIR /app/server-register-service
 
 # Copy main pom and other necessary files
-COPY ./pom.xml /app
 COPY ./server-register/.mvn ./.mvn
 COPY ./server-register/mvnw .
 

@@ -1,9 +1,25 @@
 
 services:
+  # MySQL
+  mysql:
+    image: mysql:8
+    container_name: mysql-server
+    ports:
+      - "3307:3306"  # External port 3307, internal port 3306
+    environment:
+      MYSQL_ROOT_PASSWORD: 12345
+      MYSQL_DATABASE: mscv_information
+    networks:
+      - app-network-containers
+    volumes:
+      - "C:/Users/GAMER/Pictures/MICRO-PROJEC2/Storage Mysql:/var/lib/mysql"  # Bind mount
+    restart: always
+
+  # Keycloak
   keycloak:
     container_name: keycloak
     image: quay.io/keycloak/keycloak:21.0.2
-    command: [ "start-dev" ]
+    command: ["start-dev"]
     ports:
       - "8181:8181"
     depends_on:
@@ -12,48 +28,135 @@ services:
       DB_VENDOR: POSTGRES
       DB_ADDR: db-keycloak
       DB_DATABASE: db_keycloak
-      DB_PORT: 5432  # Corrected to 5432
+      DB_PORT: 5433
       DB_USER: uncledave
       DB_PASSWORD: Test123
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HTTP_PORT: 8181
     networks:
-      - app-network
-    restart: always
-
-  mysql:
-    image: mysql:8
-    container_name: mysqlTest
-    ports:
-      - "3307:3306"
-    environment:
-      MYSQL_ROOT_PASSWORD: 12345
-      MYSQL_DATABASE: mscv_information
+      - app-network-containers
     volumes:
-      - ./data/mysql:/var/lib/mysql  # Use a local directory for data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
-    networks:
-      - app-network
+      - "C:/Users/GAMER/Pictures/MICRO-PROJEC2/Storage Keycloak:/opt/keycloak/data"  # Bind mount
     restart: always
 
+  # PostgreSQL for Keycloak
+  db-keycloak:
+    container_name: db-keycloak
+    image: postgres:15.2
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: db_keycloak
+      POSTGRES_USER: uncledave
+      POSTGRES_PASSWORD: Test123
+    ports:
+      - "5433:5433"
+    networks:
+      - app-network-containers
+
+  # Eureka Server
+  eureka-server:
+    image: joshua76i/eurecka-pr2:latest
+    container_name: eureka-container
+    ports:
+      - "8761:8761"
+    networks:
+      - app-network-containers
+    restart: on-failure
+
+  # Config Server
+  server-configuration:
+    image: joshua76i/config-server-pr2:latest
+    container_name: config-container
+    depends_on:
+      - eureka-server
+    ports:
+      - "8888:8888"
+    networks:
+      - app-network-containers
+    restart: on-failure
+
+  # Spring Cloud Gateway
+  gateway:
+    image: joshua76i/gateway-project2:latest
+    container_name: gateway-container
+    ports:
+      - "8081:8081"
+    networks:
+      - app-network-containers
+    restart: on-failure
+
+  # Redis
+  redis:
+    image: redis:alpine3.20
+    container_name: redis-server
+    restart: always
+    ports:
+      - "6379:6379"
+    command: redis-server --loglevel warning --requirepass monsterGym
+    networks:
+      - app-network-containers
+    volumes:
+      - redis-data-pr2:/data  # Custom volume name
+
+  # Administrator Service
+  server-administrator:
+    image: joshua76i/server-administrator-pr2:latest
+    container_name: admin-container
+    ports:
+      - "8900:8900"
+    networks:
+      - app-network-containers
+    restart: on-failure
+
+  # Information Service
+  information-service:
+    image: joshua76i/server-information-pr2:latest
+    container_name: server-info-container
+    ports:
+      - "8111:8111"
+    networks:
+      - app-network-containers
+    restart: on-failure
+
+  # Register Service
+  server-register:
+    image: joshua76i/server-register-pr2:latest
+    container_name: server-register-container
+    ports:
+      - "8902:8902"
+    networks:
+      - app-network-containers
+    restart: on-failure
+
+  # Web Page Service
+  web-page:
+    image: joshua76i/web-page-pr2:latest
+    container_name: web-page-container
+    ports:
+      - "8903:8903"
+    networks:
+      - app-network-containers
+    restart: on-failure
+
+  # Zookeeper
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
-    container_name: zookeeperTest
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
     ports:
-      - "22181:2181"
+      - 22181:2181
     networks:
-      - app-network
+      - app-network-containers
+
 
   kafka:
     image: confluentinc/cp-kafka:latest
-    container_name: kafkaTest
     depends_on:
       - zookeeper
     ports:
-      - "29092:29092"
+      - 29092:29092
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
@@ -61,25 +164,12 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_CREATE_TOPICS: "flow:1:1"
+      KAFKA_CREATE_TOPICS: "flow:1:1" # Topic name: "flow", 1 partition, replication factor 1  # Topic name: "flow", 1 partition, replication factor 1
     networks:
-      - app-network
-
-  redis:
-    image: redis:alpine3.20
-    container_name: getBasicInformation
-    restart: always
-    ports:
-      - '6379:6379'
-    command: redis-server --loglevel warning --requirepass debuggeandoideas
-    networks:
-      - app-network
-    volumes:
-      - redis-data:/data
+      - app-network-containers
 
 networks:
-  app-network:
-    external: true
+  app-network-containers:
 
 volumes:
-  redis-data: {}
+  redis-data-pr2: {}  # Custom volume name

@@ -8,6 +8,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import application.Ports.Drivens.InterfaceRepositories.PromotionRepositoryInterface;
 import infraestrucutre.Adapters.Drivens.Entities.Promotion;
+import infraestrucutre.Adapters.Drivens.Properties.ServicesUrl;
 import lombok.*;
 import reactor.core.publisher.Flux;
 
@@ -17,6 +18,7 @@ import reactor.core.publisher.Flux;
 public class PromotionRepository implements PromotionRepositoryInterface{
 
     private final WebClient.Builder webClientBuilder;
+            private final ServicesUrl servicesUrl;
 
 
     @Override
@@ -24,7 +26,7 @@ public class PromotionRepository implements PromotionRepositoryInterface{
         return this.webClientBuilder.build()
                 .get()
                 // .uri("lb://promotion-service/api/promotions/CurrentDate")
-                .uri("http://localhost:8111/api/promotions/CurrentDate/{currentDate}", Collections.singletonMap("currentDate", currentDate))
+                .uri(servicesUrl.getInfo().getUrl()+"/api/promotions/CurrentDate/{currentDate}", Collections.singletonMap("currentDate", currentDate))
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .bodyToFlux(Promotion.class);
@@ -36,7 +38,7 @@ public class PromotionRepository implements PromotionRepositoryInterface{
                 .get()
                 // .uri("lb://promotion-service/api/promotions/{date}",
                 // Collections.singletonMap("date", date))
-                .uri("http://localhost:8111/api/promotions/startDate/{startDate}", Collections.singletonMap("startDate", date))
+                .uri(servicesUrl.getInfo().getUrl()+"/api/promotions/startDate/{startDate}", Collections.singletonMap("startDate", date))
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .bodyToFlux(Promotion.class);

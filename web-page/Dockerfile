@@ -3,7 +3,6 @@ FROM openjdk:23-ea-21-jdk as builder
 WORKDIR /app/web-page-service
 
 # Copy main pom and other necessary files
-COPY ./pom.xml /app
 COPY ./web-page/.mvn ./.mvn
 COPY ./web-page/mvnw .
 
@@ -34,5 +33,3 @@ EXPOSE 8903
 
 # Entry point
 ENTRYPOINT ["java", "-jar", "app-web-page.jar"]
-
-# docker build --no-cache -t web-page:v1 . -f ./web-page/Dockerfile

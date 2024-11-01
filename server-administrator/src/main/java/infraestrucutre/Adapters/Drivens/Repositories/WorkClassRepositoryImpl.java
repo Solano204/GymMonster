@@ -20,6 +20,7 @@ import infraestrucutre.Adapters.Drivens.DTOS.DtoDetailUserSent;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoSpecialtyRecived;
 import infraestrucutre.Adapters.Drivens.Entities.AllTrainer;
 import infraestrucutre.Adapters.Drivens.Entities.WorkClass;
+import infraestrucutre.Adapters.Drivens.Properties.ServicesUrl;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import reactor.core.publisher.Flux;
@@ -46,92 +47,84 @@ import java.util.List;
 public class WorkClassRepositoryImpl implements WorkClassRepositoryInterface {
 
     private final WebClient.Builder webClientBuilder;
-
-    @Override
-    public Flux<WorkClass> getAllWorkClasses() {
-        return this.webClientBuilder.build()
-                .get()
-                .uri("http://localhost:8111/api/workclasses")
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToFlux(WorkClass.class);
-    }
-
-    @Override
-    public Mono<WorkClass> createWorkclass(WorkClass workClass) {
-        return this.webClientBuilder.build()
-                .post()
-                .uri("http://localhost:8111/api/workclasses")
-                .body(Mono.just(workClass), WorkClass.class)
-                .retrieve()
-                .bodyToMono(WorkClass.class);
-    }
-
-    @Override
-    public Mono<WorkClass> updateWorkClass(WorkClass workClass, String name) {
-        return this.webClientBuilder.build()
-                .put()
-                .uri("http://localhost:8111/api/workclasses/{name}", name)
-                .body(Mono.just(workClass), WorkClass.class)
-                .retrieve()
-                .bodyToMono(WorkClass.class);
-    }
-
-    @Override
-    public Mono<String> deleteWorkClass(String name) {
-        return this.webClientBuilder.build()
-                .delete()
-                .uri("http://localhost:8111/api/workclasses/{name}", name)
-                .retrieve()
-                .bodyToMono(String.class);
-    }
-
-    @Override
-    public Flux<DtoDetailUserReciving> getClientsByWorkClassWithPagination(String className, int page, int size) {
-        return this.webClientBuilder.build()
-                .get()
-                .uri(uriBuilder -> uriBuilder
-                    .scheme("http")
-                    .host("localhost")
-                    .port(8111)
-                    .path("/api/workclasses/{name}/clients")
-                    .queryParam("page", page)
-                    .queryParam("size", size)
-                    .build(Collections.singletonMap("name", className)))
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToFlux(DtoDetailUserReciving.class);
-    }
-
-    @Override
-    public Flux<DtoDetailUserReciving> getTrainersByWorkClassWithPagination(String name, int page, int size) {
-        return this.webClientBuilder.build()
-                .get()
-                .uri(uriBuilder -> uriBuilder
-                    .scheme("http")
-                    .host("localhost")
-                    .port(8111)
-                    .path("/api/workclasses/{name}/trainers")
-                    .queryParam("page", page)
-                    .queryParam("size", size)
-                    .build(Collections.singletonMap("name", name)))
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToFlux(DtoDetailUserReciving.class);
-    }
-
-    @Override
-    public Flux<Schedule> getCSchedulesByWorkClassWithPagination(String className) {
-        return this.webClientBuilder.build()
-                .get()
-                .uri(uriBuilder -> uriBuilder
-                    .scheme("http")
-                    .host("localhost")
-                    .port(8111)
-                    .path("/api/workclasses/{name}/schedules")
-                    .build(Collections.singletonMap("name", className)))
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToFlux(Schedule.class);
-    }
+                   private final ServicesUrl servicesUrl;
+    
+                   @Override
+                   public Flux<WorkClass> getAllWorkClasses() {
+                       return this.webClientBuilder.build()
+                               .get()
+                               .uri(servicesUrl.getInfo().getUrl() + "/api/workclasses")
+                               .accept(MediaType.APPLICATION_JSON)
+                               .retrieve()
+                               .bodyToFlux(WorkClass.class);
+                   }
+                   
+                   @Override
+                   public Mono<WorkClass> createWorkclass(WorkClass workClass) {
+                       return this.webClientBuilder.build()
+                               .post()
+                               .uri(servicesUrl.getInfo().getUrl() + "/api/workclasses")
+                               .body(Mono.just(workClass), WorkClass.class)
+                               .retrieve()
+                               .bodyToMono(WorkClass.class);
+                   }
+                   
+                   @Override
+                   public Mono<WorkClass> updateWorkClass(WorkClass workClass, String name) {
+                       return this.webClientBuilder.build()
+                               .put()
+                               .uri(servicesUrl.getInfo().getUrl() + "/api/workclasses/{name}", name)
+                               .body(Mono.just(workClass), WorkClass.class)
+                               .retrieve()
+                               .bodyToMono(WorkClass.class);
+                   }
+                   
+                   @Override
+                   public Mono<String> deleteWorkClass(String name) {
+                       return this.webClientBuilder.build()
+                               .delete()
+                               .uri(servicesUrl.getInfo().getUrl() + "/api/workclasses/{name}", name)
+                               .retrieve()
+                               .bodyToMono(String.class);
+                   }
+                   
+                   @Override
+                   public Flux<DtoDetailUserReciving> getClientsByWorkClassWithPagination(String className, int page, int size) {
+                       return this.webClientBuilder.build()
+                               .get()
+                               .uri(uriBuilder -> uriBuilder
+                                   .path(servicesUrl.getInfo().getUrl() + "/api/workclasses/{name}/clients")
+                                   .queryParam("page", page)
+                                   .queryParam("size", size)
+                                   .build(Collections.singletonMap("name", className)))
+                               .accept(MediaType.APPLICATION_JSON)
+                               .retrieve()
+                               .bodyToFlux(DtoDetailUserReciving.class);
+                   }
+                   
+                   @Override
+                   public Flux<DtoDetailUserReciving> getTrainersByWorkClassWithPagination(String name, int page, int size) {
+                       return this.webClientBuilder.build()
+                               .get()
+                               .uri(uriBuilder -> uriBuilder
+                                   .path(servicesUrl.getInfo().getUrl() + "/api/workclasses/{name}/trainers")
+                                   .queryParam("page", page)
+                                   .queryParam("size", size)
+                                   .build(Collections.singletonMap("name", name)))
+                               .accept(MediaType.APPLICATION_JSON)
+                               .retrieve()
+                               .bodyToFlux(DtoDetailUserReciving.class);
+                   }
+                   
+                   @Override
+                   public Flux<Schedule> getCSchedulesByWorkClassWithPagination(String className) {
+                       return this.webClientBuilder.build()
+                               .get()
+                               .uri(uriBuilder -> uriBuilder
+                                   .path(servicesUrl.getInfo().getUrl() + "/api/workclasses/{name}/schedules")
+                                   .build(Collections.singletonMap("name", className)))
+                               .accept(MediaType.APPLICATION_JSON)
+                               .retrieve()
+                               .bodyToFlux(Schedule.class);
+                   }
 }

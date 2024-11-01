@@ -8,16 +8,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.monster.gateway.Entities.Token;
 import com.monster.gateway.InterfaceServices.RedisHandlerInterface;
 import com.monster.gateway.InterfaceServices.Session;
+import com.monster.gateway.PropertiesUrl.ServicesUrl;
 
 import lombok.Data;
 import reactor.core.publisher.Mono;
 
+import java.security.Provider.Service;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -35,6 +38,8 @@ public class ImpSession implements Session {
     private final ObjectMapper objectMapper;
     private static final Logger logger = LoggerFactory.getLogger(ImpSession.class);
 
+    private final ServicesUrl servicesUrl;
+    
     @Override
     public Mono<Token> login(String username, String password) {
         return webClient
@@ -42,8 +47,8 @@ public class ImpSession implements Session {
                 .uri("/realms/docker-real/protocol/openid-connect/token")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .body(BodyInserters
-                        .fromFormData("client_id", "Docker-Gym")
-                        .with("client_secret", "ckdP5Vf6X5laZN16wm1xGIXGLZXrDC8p")
+                        .fromFormData("client_id",  servicesUrl.getKeycloak().getClientId())
+                        .with("client_secret", servicesUrl.getKeycloak().getClientSecret())
                         .with("grant_type", "password")
                         .with("username", username)
                         .with("password", password))
@@ -100,8 +105,8 @@ public class ImpSession implements Session {
                 .uri("/realms/docker-real/protocol/openid-connect/logout")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .body(BodyInserters
-                        .fromFormData("client_id", "Docker-Gym")
-                        .with("client_secret", "ckdP5Vf6X5laZN16wm1xGIXGLZXrDC8p")
+                        .fromFormData("client_id", servicesUrl.getKeycloak().getClientId())
+                        .with("client_secret", servicesUrl.getKeycloak().getClientSecret())
                         .with("refresh_token", refreshToken))
                 .retrieve()
                 .bodyToMono(Void.class)
