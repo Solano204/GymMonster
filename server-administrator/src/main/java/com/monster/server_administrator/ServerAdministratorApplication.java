@@ -2,7 +2,7 @@ package com.monster.server_administrator;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-@SpringBootApplication(scanBasePackages = {"controller","infraestrucutre", "Security","Mappers"})
+@SpringBootApplication(scanBasePackages = {"controller","infraestrucutre", "Security","Mappers","application"})
 public class ServerAdministratorApplication {
 
 	public static void main(String[] args) {

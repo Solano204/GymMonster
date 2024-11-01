@@ -12,29 +12,30 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import infraestrucutre.Adapters.Drivens.Properties.ServicesUrl;
+import lombok.Data;
+
 import java.util.Collections;
 
 @Configuration
 @EnableCaching
+@Data
 public class redisConfiguration {
-    @Value("${spring.redis.host}")
-    private String redisHost;
+   
+    
 
-    @Value("${spring.redis.port}")
-    private int redisPort;
-
-    @Value("${spring.redis.password}")
-    private String password;
     public static final String CACHE_NAME = "redis";
     
+    private final ServicesUrl servicesUrl;
     @Bean 
     public RedissonClient redissonClient() {
+    
         
     
     var config = new Config();
     config.useSingleServer()
-    .setAddress("redis://" + redisHost + ":" + redisPort)
-    .setPassword(password);
+    .setAddress("redis://" + servicesUrl.getRedis().getHost() + ":" + servicesUrl.getRedis().getPort())
+    .setPassword(servicesUrl.getRedis().getPassword());
     return Redisson.create(config);
 }
 

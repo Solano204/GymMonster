@@ -14,21 +14,23 @@ import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 
 import infraestrucutre.Adapters.Drivens.Entities.AllClient;
+import infraestrucutre.Adapters.Drivens.PropertiesUrl.ServicesUrl;
+import lombok.Data;
 
 import java.util.HashMap;
 import java.util.Map;                       
 
 @EnableKafka
 @Configuration
+@Data
 public class KafkaConsumerConfig {
 
-    @Value("${spring.kafka.bootstrapAddress}")
-    private String bootstrapAddress;
+    private final ServicesUrl   servicesUrl;
 
     @Bean
     public ConsumerFactory<String, AllClient> consumerFactory() {
         Map<String, Object> props = new HashMap<>();
-        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress); // Use the injected value
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, servicesUrl.getKafka().getBootstrapAddress()); // Use the injected value
         props.put(ConsumerConfig.GROUP_ID_CONFIG, "grupo1"); // Ensure group ID is set
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);

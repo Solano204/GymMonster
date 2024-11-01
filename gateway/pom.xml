@@ -141,6 +141,11 @@
     		   <groupId>org.springframework.cloud</groupId>
     			<artifactId>spring-cloud-starter-bootstrap</artifactId>
     	</dependency>
+        <!-- For Maven -->
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+</dependency>
 
     </dependencies>
 	<dependencyManagement>

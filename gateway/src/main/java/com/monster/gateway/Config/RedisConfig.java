@@ -1,5 +1,6 @@
 package com.monster.gateway.Config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -8,6 +9,12 @@ import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
+import com.monster.gateway.PropertiesUrl.ServicesUrl;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+import java.security.Provider.Service;
 import java.util.Collections;
 
 import org.springframework.context.annotation.Bean;
@@ -44,17 +51,16 @@ import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 
 @Configuration
+@Data
+@AllArgsConstructor
 public class RedisConfig {
 
-    private static final String REDIS_HOST = "localhost"; // Use the correct host
-    private static final int REDIS_PORT = 6379;           // Correct port
-    private static final String REDIS_PASSWORD = "debuggeandoideas"; // Correct password
-
+    private final ServicesUrl servicesUrl;
     @Primary
     @Bean
     public ReactiveRedisConnectionFactory reactiveRedisConnectionFactory() {
-        RedisStandaloneConfiguration configuration = new RedisStandaloneConfiguration(REDIS_HOST, REDIS_PORT);
-        configuration.setPassword(REDIS_PASSWORD); // Set the password
+        RedisStandaloneConfiguration configuration = new RedisStandaloneConfiguration(servicesUrl.getRedis().getHost(), servicesUrl.getRedis().getPort());
+        configuration.setPassword(servicesUrl.getRedis().getPassword()); // Set the password
         return new LettuceConnectionFactory(configuration);
     }
 

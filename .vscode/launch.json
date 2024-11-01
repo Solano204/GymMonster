@@ -2,6 +2,12 @@
     "configurations": [
         {
             "type": "java",
+            "name": "ServerInformationsApplication",
+            "request": "launch",
+            "mainClass": "com.monster.server_informations.ServerInformationsApplication"
+        },
+        {
+            "type": "java",
             "name": "ServerInfoApplication",
             "request": "launch",
             "mainClass": "com.monster.server_info.ServerInfoApplication"

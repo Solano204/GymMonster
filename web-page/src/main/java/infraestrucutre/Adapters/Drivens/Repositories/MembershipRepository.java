@@ -1,5 +1,6 @@
 package infraestrucutre.Adapters.Drivens.Repositories;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -8,6 +9,7 @@ import application.Ports.Drivens.InterfaceRepositories.MembershipRepositoryInter
 import application.Ports.Drivers.IServices.MembershipInterface;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoMembershipReciving;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoMembershipSent;
+import infraestrucutre.Adapters.Drivens.Properties.ServicesUrl;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import reactor.core.publisher.Flux;
@@ -18,15 +20,16 @@ import reactor.core.publisher.Flux;
 public class MembershipRepository implements MembershipRepositoryInterface {
 
     private final WebClient.Builder webClientBuilder;
+    private final ServicesUrl servicesUrl;
 
     @Override
-    public Flux<DtoMembershipReciving> getAllMemberships() {
+public Flux<DtoMembershipReciving> getAllMemberships() {
     return this.webClientBuilder.build()
             .get()
-            // .uri("lb://membership-service/api/memberships")
-            .uri("http://localhost:8111/api/memberships")
+            .uri(servicesUrl.getInfo().getUrl() + "/api/memberships") // Use servicesUrl here
             .accept(MediaType.APPLICATION_JSON)
             .retrieve()
             .bodyToFlux(DtoMembershipReciving.class);
-        }   
+}
+
 }

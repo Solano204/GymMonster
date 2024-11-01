@@ -33,6 +33,7 @@ import infraestrucutre.Adapters.Drivens.DTOS.DtoInfoGeneralClient;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoInfoTrainerSent;
 import infraestrucutre.Adapters.Drivens.Entities.AllClient;
 import infraestrucutre.Adapters.Drivens.Entities.WorkClass;
+import infraestrucutre.Adapters.Drivens.Properties.ServicesUrl;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.AllArgsConstructor;
@@ -47,214 +48,200 @@ import reactor.core.publisher.Mono;
 
                 private final HaveIBeenPwnedRestApiReactivePasswordChecker passwordChecker;
                 private final WebClient.Builder webClientBuilder;
+                private final ServicesUrl servicesUrl;
                 // private final KafkaTemplate<String, AllClient> postmanRegistration;
 
+            
+                // Fetch all clients
+               // Fetch all clients
+@Override
+public Mono<List<AllClient>> getAllClients() {
+    return webClientBuilder.build()
+            .get()
+            .uri(servicesUrl.getInfo().getUrl() + "/api/clients/AD/allClients") // Dynamic URL
+            .accept(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .bodyToFlux(AllClient.class)
+            .collectList(); // Returning a list of AllClient
+}
 
-                public Mono<List<AllClient>> getAllClients() {
-                return webClientBuilder.build()
-                        .get()
-                        .uri("http://localhost:8111/api/clients/AD/allClients") // Assuming Service B has this endpoint
-                        .accept(MediaType.APPLICATION_JSON)
-                        .retrieve()
-                        .bodyToFlux(AllClient.class)
-                        .collectList(); // Returning a list of AllClient
-        }
+// Update client by username
+@Override
+public Mono<String> updateClient(String username, DtoDetailUserSent client) {
+    return webClientBuilder.build()
+            .put()
+            .uri(servicesUrl.getInfo().getUrl() + "/api/clients/{username}/updateBasicInformation", username) // Use dynamic URL
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue(client)
+            .retrieve()
+            .bodyToMono(String.class);
+}
 
-        // Fetch all clients
+// Change password
+@Override
+public Mono<String> changePassword(String username, String oldPassword, String newPassword) {
+    return webClientBuilder.build()
+            .put()
+            .uri(uriBuilder -> uriBuilder
+                    .scheme("http")
+                    .host(servicesUrl.getInfo().getUrl()) // Use dynamic URL
+                    .path("/api/clients/{username}/{oldPassword}/{newPassword}/changePassword")
+                    .build(username, oldPassword, newPassword))
+            .accept(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .bodyToMono(String.class);
+}
 
-    // Update client by username
-    @Override
-    public Mono<String> updateClient(String username, DtoDetailUserSent client) {
-        return webClientBuilder.build()
-                .put()
-                .uri("http://localhost:8111/api/clients/{username}/updateBasicInformation", username)
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(client)
-                .retrieve()
-                .bodyToMono(String.class);
-    }
+// Change email
+@Override
+public Mono<String> changeEmail(String username, String email) {
+    return webClientBuilder.build()
+            .put()
+            .uri(uriBuilder -> uriBuilder
+                    .scheme("http")
+                    .host(servicesUrl.getInfo().getUrl()) // Use dynamic URL
+                    .path("/api/clients/{username}/{email}/changeEmail")
+                    .build(username, email))
+            .accept(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .bodyToMono(String.class);
+}
 
-    // Change password
-    @Override
-    public Mono<String> changePassword(String username, String oldPassword, String newPassword) {
-        return webClientBuilder.build()
-                .put()
-                .uri(uriBuilder -> uriBuilder
-                        .scheme("http")
-                        .host("localhost")
-                        .port(8111)
-                        .path("/api/clients/{username}/{oldPassword}/{newPassword}/changePassword")
-                        .build(username, oldPassword, newPassword))
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(String.class);
-    }
+// Change username
+@Override
+public Mono<String> changeUsername(String username, String newUsername) {
+    return webClientBuilder.build()
+            .put()
+            .uri(uriBuilder -> uriBuilder
+                    .scheme("http")
+                    .host(servicesUrl.getInfo().getUrl()) // Use dynamic URL
+                    .path("/api/clients/{username}/{newUsername}/changeUsername")
+                    .build(username, newUsername))
+            .accept(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .bodyToMono(String.class);
+}
 
-    // Change email
-    @Override
-    public Mono<String> changeEmail(String username, String email) {
-        return webClientBuilder.build()
-                .put()
-                .uri(uriBuilder -> uriBuilder
-                        .scheme("http")
-                        .host("localhost")
-                        .port(8111)
-                        .path("/api/clients/{username}/{email}/changeEmail")
-                        .build(username, email))
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(String.class);
-    }
+// Change membership
+@Override
+public Mono<String> changeMembership(String username, String membershipType) {
+    return webClientBuilder.build()
+            .put()
+            .uri(uriBuilder -> uriBuilder
+                    .scheme("http")
+                    .host(servicesUrl.getInfo().getUrl()) // Use dynamic URL
+                    .path("/api/clients/{username}/{membershipType}/assignMembership")
+                    .build(username, membershipType))
+            .accept(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .bodyToMono(String.class);
+}
 
-    // Change username
-    @Override
-    public Mono<String> changeUsername(String username, String newUsername) {
-        return webClientBuilder.build()
-                .put()
-                .uri(uriBuilder -> uriBuilder
-                        .scheme("http")
-                        .host("localhost")
-                        .port(8111)
-                        .path("/api/clients/{username}/{newUsername}/changeUsername")
-                        .build(username, newUsername))
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(String.class);
-    }
+// Unassign membership
+@Override
+public Mono<String> unassignMembership(String username, String membershipType) {
+    return webClientBuilder.build()
+            .delete()
+            .uri(uriBuilder -> uriBuilder
+                    .scheme("http")
+                    .host(servicesUrl.getInfo().getUrl()) // Use dynamic URL
+                    .path("/api/clients/{username}/{membershipType}/dessignMembership")
+                    .build(username, membershipType))
+            .accept(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .bodyToMono(String.class);
+}
 
-    // Change membership
-    @Override
-    public Mono<String> changeMembership(String username, String membershipType) {
-        return webClientBuilder.build()
-                .put()
-                .uri(uriBuilder -> uriBuilder
-                        .scheme("http")
-                        .host("localhost")
-                        .port(8111)
-                        .path("/api/clients/{username}/{membershipType}/assignMembership")
-                        .build(username, membershipType))
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(String.class);
-    }
+// Change trainer
+@Override
+public Mono<String> changeTrainer(String username, String usernameTrainer) {
+    return webClientBuilder.build()
+            .put()
+            .uri(uriBuilder -> uriBuilder
+                    .scheme("http")
+                    .host(servicesUrl.getInfo().getUrl()) // Use dynamic URL
+                    .path("/api/clients/{username}/{usernameTrainer}/assignTrainer")
+                    .build(username, usernameTrainer))
+            .accept(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .bodyToMono(String.class);
+}
 
+// Unassign trainer
+@Override
+public Mono<String> unassignTrainer(String username, String usernameTrainer) {
+    return webClientBuilder.build()
+            .delete()
+            .uri(uriBuilder -> uriBuilder
+                    .scheme("http")
+                    .host(servicesUrl.getInfo().getUrl()) // Use dynamic URL
+                    .path("/api/clients/{username}/{usernameTrainer}/dessignTrainer")
+                    .build(username, usernameTrainer))
+            .accept(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .bodyToMono(String.class);
+}
 
-    @Override
-    // Unassign membership
-        public Mono<String> unassignMembership(String username, String membershipType) {
-                return webClientBuilder.build()
-                        .delete()
-                        .uri(uriBuilder -> uriBuilder
-                                .scheme("http")
-                                .host("localhost")
-                                .port(8111)
-                                .path("/api/clients/{username}/{membershipType}/dessignMembership")
-                                .build(username, membershipType))
-                        .accept(MediaType.APPLICATION_JSON)
-                        .retrieve()
-                        .bodyToMono(String.class);
-        }
+// Get work classes by client ID
+@Override
+public Mono<List<WorkClass>> getWorkClassesByClientId(String username) {
+    return webClientBuilder.build()
+            .get()
+            .uri(servicesUrl.getInfo().getUrl() + "/api/clients/{username}/workClasses", username) // Use dynamic URL
+            .accept(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .bodyToFlux(WorkClass.class)
+            .collectList();
+}
 
+// Check if username exists
+@Override
+public Mono<Boolean> validateIfUserNameExistsClient(String username) {
+    return webClientBuilder.build()
+            .get()
+            .uri(servicesUrl.getInfo().getUrl() + "/api/clients/{username}/usernameExist", username) // Use dynamic URL
+            .accept(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .bodyToMono(Boolean.class);
+}
 
-        @Override
-    // Change trainer
-    public Mono<String> changeTrainer(String username, String usernameTrainer) {
-        return webClientBuilder.build()
-                .put()
-                .uri(uriBuilder -> uriBuilder
-                        .scheme("http")
-                        .host("localhost")
-                        .port(8111)
-                        .path("/api/clients/{username}/{usernameTrainer}/assignTrainer")
-                        .build(username, usernameTrainer))
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(String.class);
-    }
+// Check if email exists
+@Override
+public Mono<Boolean> validateIfEmailExistsClient(String email) {
+    return webClientBuilder.build()
+            .get()
+            .uri(servicesUrl.getInfo().getUrl() + "/api/clients/{email}/emailExist", email) // Use dynamic URL
+            .accept(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .bodyToMono(Boolean.class);
+}
 
+// Delete client by username and password
+@Override
+public Mono<String> deleteClient(String username, String password) {
+    return webClientBuilder.build()
+            .delete()
+            .uri(uriBuilder -> uriBuilder
+                    .scheme("http")
+                    .host(servicesUrl.getInfo().getUrl()) // Use dynamic URL
+                    .path("/api/clients/{username}/{password}/deleteAccount")
+                    .build(username, password))
+            .accept(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .bodyToMono(String.class);
+}
 
-    @Override
-    // Unassign trainer
-    public Mono<String> unassignTrainer(String username, String usernameTrainer) {
-        return webClientBuilder.build()
-                .delete()
-                .uri(uriBuilder -> uriBuilder
-                        .scheme("http")
-                        .host("localhost")
-                        .port(8111)
-                        .path("/api/clients/{username}/{usernameTrainer}/dessignTrainer")
-                        .build(username, usernameTrainer))
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(String.class);
-    }
-
-
-    @Override
-    // Get work classes by client ID
-    public Mono<List<WorkClass>> getWorkClassesByClientId(String username) {
-        return webClientBuilder.build()
-                .get()
-                .uri("http://localhost:8111/api/clients/{username}/workClasses", username)
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToFlux(WorkClass.class)
-                .collectList();
-    }
-
-
-    @Override
-    // Check if username exists
-    public Mono<Boolean> validateIfUserNameExistsClient(String username) {
-        return webClientBuilder.build()
-                .get()
-                .uri("http://localhost:8111/api/clients/{username}/usernameExist", username)
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Boolean.class);
-    }
-
-
-    @Override
-    // Check if email exists
-    public Mono<Boolean> validateIfEmailExistsClient(String email) {
-        return webClientBuilder.build()
-                .get()
-                .uri("http://localhost:8111/api/clients/{email}/emailExist", email)
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Boolean.class);
-    }
-
-
-    @Override
-    // Delete client by username and password
-    public Mono<String> deleteClient(String username, String password) {
-        return webClientBuilder.build()
-                .delete()
-                .uri(uriBuilder -> uriBuilder
-                        .scheme("http")
-                        .host("localhost")
-                        .port(8111)
-                        .path("/api/clients/{username}/{password}/deleteAccount")
-                        .build(username, password))
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(String.class);
-    }
-
-
-    @Override
-    // Create a new client
-    public Mono<String> createClient(AllClient client) {
-        return webClientBuilder.build()
-                .post()
-                .uri("http://localhost:8111/api/clients/AD/create")
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(client)
-                .retrieve()
-                .bodyToMono(String.class);
-    }
+// Create a new client
+@Override
+public Mono<String> createClient(AllClient client) {
+    return webClientBuilder.build()
+            .post()
+            .uri(servicesUrl.getInfo().getUrl() + "/api/clients/AD/create") // Use dynamic URL
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue(client)
+            .retrieve()
+            .bodyToMono(String.class);
+}
 
 
     @Override

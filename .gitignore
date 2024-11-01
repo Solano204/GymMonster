@@ -1,2 +1,8 @@
 /target/*.jar
 *.jar
+
+# Ignore the server-information folder
+server-information/
+
+# Ignore all .zip files
+*.zip
