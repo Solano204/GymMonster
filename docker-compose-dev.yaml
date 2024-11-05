@@ -98,6 +98,9 @@ services:
       - app-network-containers
     volumes:
       - redis-data-pr2:/data  # Custom volume name
+  
+
+  
 
   # Administrator Service
   server-administrator:
