@@ -1,0 +1,20 @@
+// These step are to test the application using test container, BUT HERE I DONT HAVE DATA LOADED !!! 
+
+// These steps is to debug the container of mysql and comprate if the tables are being affected, But all test will be executed automatically becuase im using TEST-CONTAINER and I dont need of a external service!!
+
+docker ps
+docker exec -it aa5818688377  /bin/bash
+ mysql -u root -p
+show databases; 
+ use mscv_information_test;
+ show tables; 
+ select * from testing_table;
+
+
+
+
+
+
+# More about the test-containers
+
+https://testcontainers.com/modules

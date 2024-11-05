@@ -112,7 +112,7 @@ public class RedisTokenValidationFilter implements GlobalFilter, Ordered {
                 }));
     }
 
-    private Mono<Void> handleError(ServerWebExchange exchange, String message, HttpStatus status) {
+    public Mono<Void> handleError(ServerWebExchange exchange, String message, HttpStatus status) {
         // Set the response status
         exchange.getResponse().setStatusCode(status);
 
@@ -139,7 +139,7 @@ public class RedisTokenValidationFilter implements GlobalFilter, Ordered {
     }
 
     // Check if validation should be skipped based on specific patterns
-    private boolean shouldSkipValidation(String requestPath) {
+    public boolean shouldSkipValidation(String requestPath) {
         return EXCLUDED_PATHS.stream().anyMatch(excludedPath -> PATH_MATCHER.match(excludedPath, requestPath));
     }
 
@@ -160,8 +160,7 @@ public class RedisTokenValidationFilter implements GlobalFilter, Ordered {
                 });
     }
 
-    @SuppressWarnings("unlikely-arg-type")
-    private Mono<Token> attemptRefreshToken(ServerWebExchange exchange) {
+    public Mono<Token> attemptRefreshToken(ServerWebExchange exchange) {
         String refreshToken = extractRefreshToken(exchange);
         String username = exchange.getRequest().getHeaders().getFirst("username");
 
@@ -214,12 +213,12 @@ public class RedisTokenValidationFilter implements GlobalFilter, Ordered {
         return Mono.empty();
     }
 
-    private Mono<Boolean> cacheNewTokens(String username, Token newTokens) {
+    public Mono<Boolean> cacheNewTokens(String username, Token newTokens) {
         return redisHandler.login(username, newTokens).then(Mono.just(true)).doOnError(e -> logger.error("Failed to cache new tokens for user: {}. Error: {}", username,
         e.getMessage(), e));
     }
 
-    private String extractToken(ServerWebExchange exchange) {
+    public String extractToken(ServerWebExchange exchange) {
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             return authHeader.substring(7); // Remove "Bearer " prefix
@@ -227,9 +226,8 @@ public class RedisTokenValidationFilter implements GlobalFilter, Ordered {
         return null;
     }
 
-    private String extractRefreshToken(ServerWebExchange exchange) {
+    public String extractRefreshToken(ServerWebExchange exchange) {
         return exchange.getRequest().getHeaders().getFirst("refresh_token");
     }
 
-    
 }
