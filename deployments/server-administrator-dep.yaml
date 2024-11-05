@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server-administrator-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: server-administrator
+  template:
+    metadata:
+      labels:
+        app: server-administrator
+    spec:
+      containers:
+        - name: server-administrator
+          image: joshua76i/server-administrator-pr2:latest # Replace with your actual image
+          ports:
+            - containerPort: 8900
+          env:
+            - name: SERVER_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: svc-admin-map
+                  key: server.port-dev
+            - name: SERVER_INF_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: svc-admin-map
+                  key: info-server-dev
+            - name: SERVER_INF_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: svc-admin-map
+                  key: info-server-uri-dev
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: server-administrator
+spec:
+  type: LoadBalancer
+  ports:
+    - protocol: TCP
+      port: 8900        # Exposed port for clients
+      targetPort: 8900 # Port on which the container listens
+  selector:
+    app: server-administrator

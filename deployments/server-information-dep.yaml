@@ -1,0 +1,129 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dep-server-information
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      role: server-information
+  template:
+    metadata:
+      labels:
+        role: server-information
+    spec:
+      containers:
+        - image: joshua76i/server-information-pr2:latest  # Replace with your Docker image for the server-information service
+          name: server-information
+          ports:
+            - containerPort: 8111
+          env:
+            - name: SERVER_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: svc-info-map
+                  key: server.port-dev
+            
+            - name: R2DBC_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: svc-info-map
+                  key: r2dbc-url-dev
+
+            - name: R2DBC_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: MYSQL_USERNAME
+                  
+            - name: R2DBC_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: MYSQL_PASSWORD
+
+            - name: JWT_ISSUER_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-map
+                  key: JWT_ISSUER_URI
+              
+            - name: JWT_JWK_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-map
+                  key: JWT_JWK_SET_URI
+              
+            - name: JWT_RESOURCE_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-map
+                  key: JWT_RESOURCE_ID
+
+            - name: JWT_PRINCIPAL_ATTR
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-map
+                  key: JWT_PRINCIPLE_ATTRIBUTE
+              
+            - name: EMAIL_SENDER
+              valueFrom:
+                configMapKeyRef:
+                  name: email-map
+                  key: EMAIL-FROM
+
+            - name: EMAIL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: EMAIL_PASSWORD
+
+            - name: REALM_MASTER
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-map
+                  key: MASTER-KEY
+
+            - name: USER_CONSOLE
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-map
+                  key: USERNAME-KEY
+
+            - name: ADMIN_CLI
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-map
+                  key: ADMIN-CLI
+
+            - name: ADMIN_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: ADMIN_SECRET
+
+            - name: REALM_APP
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-map
+                  key: REALM_APP
+
+            - name: PASSWORD_CONSOLE
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: PASSWORD-KEY
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: server-information
+spec:
+  type: LoadBalancer
+  ports:
+    - protocol: TCP
+      port: 8111
+      targetPort: 8111
+  selector:
+    role: server-information

@@ -6,3 +6,11 @@ server-information/
 
 # Ignore all .zip files
 *.zip
+
+# Ignore IDE and configuration files
+.vscode/
+
+# Ignore specific microservices
+eurecka/
+server-information/
+server-configuration/

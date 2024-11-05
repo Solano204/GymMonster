@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-map
+data:
+
+  # Development Profile Overrides
+  spring.config.activate.on-profile: dev
+  db-dev: "mscv_information"
