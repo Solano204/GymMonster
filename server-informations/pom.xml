@@ -67,12 +67,13 @@
         <artifactId>spring-boot-starter-data-r2dbc</artifactId>
     </dependency>
 
-    <!-- R2DBC H2 if you want to use H2 for testing -->
-    <dependency>
-        <groupId>io.r2dbc</groupId>
-        <artifactId>r2dbc-h2</artifactId>
-    </dependency>
 
+   <dependency>
+    <groupId>mysql</groupId>
+    <artifactId>mysql-connector-java</artifactId>
+    <version>8.0.33</version> <!-- Ensure this matches the MySQL version -->
+    <scope>test</scope>
+</dependency>
 	<!-- SECURITY -->
 
 	 <dependency>
@@ -133,7 +134,67 @@
 			<version>21.1.2</version>
 		</dependency>
 
+<!-- TEST CONTAINERS -->
+
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-test</artifactId>
+    <scope>test</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-testcontainers</artifactId>
+    <scope>test</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.testcontainers</groupId>
+    <artifactId>junit-jupiter</artifactId>
+    <scope>test</scope>
+</dependency>
+
+ <dependency>
+    <groupId>com.github.dasniko</groupId>
+    <artifactId>testcontainers-keycloak</artifactId>
+    <version>3.4.0</version>
+    <scope>test</scope>
+</dependency>
+
+
+<!-- Testcontainers for MySQL -->
+    <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>mysql</artifactId>
+        <version>1.18.3</version>
+        <scope>test</scope>
+    </dependency>
+
+    <!-- Testcontainers for R2DBC -->
+    <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>r2dbc</artifactId>
+        <version>1.18.3</version>
+        <scope>test</scope>
+    </dependency>
+
+	
+
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers-bom</artifactId>
+            <version>1.20.3</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+
 	</dependencies>
+
+	
 	<dependencyManagement>
 		<dependencies>
 			<dependency>

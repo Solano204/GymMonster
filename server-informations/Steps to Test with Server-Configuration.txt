@@ -1,0 +1,37 @@
+This process is use when I wanna use the configuration from my server-configuration
+
+1- First step right to the file of this serve "bootstrap.properties" here change the enviorement variable to test (optional because Here im using a enviorement variable and this variable will be updated to test in each class test or method test )
+
+2- Second step change this properties because im testing from my local
+before : 
+spring.cloud.config.uri=http://server-configuration:8888
+after :
+spring.cloud.config.uri=http://localhost:8888
+
+
+3- Third step now execute the docker compose (like this :  docker-compose -f docker-compose-test-inf.yaml up), here I have all dependencies for testing the serve, only execute test when I wanna testing classessTest that depends from some  external services 
+more exactly when the classTest have this definition 
+
+DEPENDS 
+@SpringBootTest
+@ActiveProfiles("test")
+public class KeycloakServiceImplIntegrationTest {
+
+NOT DEPENDS 
+public class TokenAndRefreshTest {
+
+
+THESE STEPS APPLY ONLY IN THE CASE THAT EXECUTE THE DOCKER-COMPOSE
+4- Now check if the servers are running and Now you can testing any test from my application depends or not from a external service 
+I have several way to test the methods
+By mades of the IDE 
+Or thorught the command 
+some command 
+
+to test all test: 
+./mvnw.cmd test
+
+to test a test from a class :
+ ./mvnw.cmd -Dtest=ServerInformationApplicationTests#testSumSuccess test
+
+ ETC 
