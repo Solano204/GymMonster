@@ -54,8 +54,8 @@ public class RedisTokenValidationFilter implements GlobalFilter, Ordered {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+       
         String requestPath = exchange.getRequest().getURI().getPath();
-        
         // Check if the path should skip validation
         if (shouldSkipValidation(requestPath)) {
             return chain.filter(exchange); // Skip token validation

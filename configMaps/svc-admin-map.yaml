@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: svc-admin-map
+data:
+
+  # Development Profile Overrides
+  curr.name.test: "dev"  # Value for the dev profile
+  server.port-dev: "8900"
+  spring.config.activate.on-profile: dev
+  info-server-dev: "server-information"
+  info-server-uri-dev: "lb://server-information"
+  info-server-port-dev: "8111"
+
+  # Test Profile Overrides
+  curr.name.test: "test"  # Value for the test profile
+
+  # Production Profile Overrides
+  curr.name.prod: "prod"  # Value for the prod profile

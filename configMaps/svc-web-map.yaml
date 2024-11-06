@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: svc-web-map
+data:
+
+  # Development Profile Overrides
+  spring.config.activate.on-profile: dev
+  curr.name.test: "dev"  # Value for the dev profile
+  info-server-dev: "server-information"
+  info-server-uri-dev: "lb://server-information"
+  info-server-port-dev: "8903"
+  server.port-dev: "8903"
+  redis_host-dev: "redis"
+  redis_port-dev: "6379"
+  kafka_host-dev: "kafka-service:9092"
+  
+
+  # Test Profile Overrides
+  curr.name.test: "test"  # Value for the test profile
+
+  # Production Profile Overrides
+  curr.name.prod: "prod"  # Value for the prod profile

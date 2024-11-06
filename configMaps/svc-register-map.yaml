@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: svc-register-map
+data:
+
+  # Development Profile Overrides
+  spring.config.activate.on-profile: dev
+  curr.name.test: "dev"  # Value for the dev profile
+  app-name-dev: "server-register"
+  server.port-dev: "8902"
+
+  # MySQL R2DBC Connection
+  r2dbc-url-dev: "r2dbc:mysql://mysql-server:3306/mscv_information"
+
+ 
+  #kAFKA
+  kafka_host-dev: "kafka-service:9092"
+  
+  # Test Profile Overrides
+  curr.name.test: "test"  # Value for the test profile
+
+  # Production Profile Overrides
+  curr.name.prod: "prod"  # Value for the prod profile

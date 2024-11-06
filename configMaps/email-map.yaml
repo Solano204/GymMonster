@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: email-map
+data:
+  # Gateway Routes
+  EMAIL-FROM: "YOUR_EMAIL"

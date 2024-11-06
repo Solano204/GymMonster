@@ -78,20 +78,7 @@
 			<artifactId>spring-boot-starter-mail</artifactId>
 		</dependency>
 		
-		<!-- Spring Cloud Eureka Client -->
-		<dependency>
-			<groupId>org.springframework.cloud</groupId>
-			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
-		</dependency>
-		 <dependency>
-			<groupId>org.springframework.cloud</groupId>
-			<artifactId>spring-cloud-starter-config</artifactId>
-		</dependency>
 
-        <dependency>
-    		   <groupId>org.springframework.cloud</groupId>
-    			<artifactId>spring-cloud-starter-bootstrap</artifactId>
-    	</dependency>
 
         <!--- KAFKA  -->
         
@@ -152,7 +139,25 @@
 			<version>21.1.2</version>
 		</dependency>
 		
-			
+	
+<!--KUBERNETES -->
+<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-kubernetes-client</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-kubernetes-client-config</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-kubernetes-client-loadbalancer</artifactId>
+		</dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+		
 	</dependencies>
 	<dependencyManagement>
 		<dependencies>

@@ -1,0 +1,84 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: keycloak-pv
+spec:
+  capacity:
+    storage: 2Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "C:/Users/GAMER/Pictures/MICRO-PROJEC2/Storage Keycloak/h2" # replace with your actual path
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: keycloak-claim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      containers:
+        - name: keycloak
+          image: quay.io/keycloak/keycloak:21.0.2
+          args: ["start-dev"]
+          env:
+            - name: DB_VENDOR
+              value: "POSTGRES"
+            - name: DB_ADDR
+              value: "db-keycloak"
+            - name: DB_DATABASE
+              value: "db_keycloak"
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_USER
+              value: "uncledave"
+            - name: DB_PASSWORD
+              value: "Test123"
+            - name: KEYCLOAK_ADMIN
+              value: "admin"
+            - name: KEYCLOAK_ADMIN_PASSWORD
+              value: "admin"
+            - name: KC_HTTP_PORT
+              value: "8181"
+          ports:
+            - containerPort: 8181
+          volumeMounts:
+            - name: data-keycloak
+              mountPath: /opt/keycloak/data # Adjust to Keycloak's data directory
+      volumes:
+        - name: data-keycloak
+          persistentVolumeClaim:
+            claimName: keycloak-claim
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak
+spec:
+  ports:
+    - port: 8181
+      targetPort: 8181
+  selector:
+    app: keycloak
+  type: LoadBalancer

@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-map
+data:
+
+  # Development Profile values (used when 'dev' profile is active)
+  spring.config.activate.on-profile: dev
+  server.url-dev: "http://192.168.213.112:31999"
+  realm.name-dev: "docker-real"
+  MASTER-KEY: "master"
+  USERNAME-KEY: "admin"
+  ADMIN-CLI: "admin-cli"
+  
+  JWT_ISSUER_URI: "http://192.168.213.112:31999/realms/docker-real"
+  JWT_JWK_SET_URI: "http://192.168.213.112:31999/realms/docker-real/protocol/openid-connect/certs"
+  
+  KEYCLOAK_CLIENT_ID: "Docker-Gym"
+  REALM_APP: "docker-real"
+
+  SERVER_URL: "http://192.168.213.112:31999"
+  
+  JWT_RESOURCE_ID: "Docker-Gym"
+  JWT_PRINCIPLE_ATTRIBUTE: "preferred_username"
+

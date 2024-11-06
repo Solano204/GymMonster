@@ -1,0 +1,144 @@
+
+kubectl create clusterrolebinding admin --clusterrole=cluster-admin --serviceaccount=default:default
+ #TO ACTIVE THE CLOUD IN KUBERNETES AND HAVE THE PERMISSION OF ADMINISTRATOR OVER KUBERNETES
+
+minikube start --driver=hyperv # To init the minikube
+
+
+
+-- FIRST CREATE THE IMAGE
+docker build -t gateway-server:v1 . -f ./gateway/Dockerfile
+docker build -t server-administrator:v1 . -f ./server-administrator/Dockerfile
+docker build -t server-information:v1 . -f ./server-informations/Dockerfile
+docker build -t server-register:v1 . -f ./server-register/Dockerfile
+docker build -t web-page:v1 . -f ./web-page/Dockerfile
+
+
+--SECOND TAG THE IMAGES
+docker tag gateway-server:v1 joshua76i/gateway-project2:latest
+docker tag server-administrator:v1 joshua76i/server-administrator-pr2:latest
+docker tag server-information:v1 joshua76i/server-information-pr2:latest
+docker tag server-register:v1 joshua76i/server-register-pr2:latest
+docker tag web-page:v1 joshua76i/web-page-pr2:latest
+
+
+--- THIRD PUSH THE IMAGES
+docker push joshua76i/gateway-project2:latest
+docker push joshua76i/server-administrator-pr2:latest
+docker push joshua76i/server-information-pr2:latest
+docker push joshua76i/server-register-pr2:latest
+docker push joshua76i/web-page-pr2:latest
+
+
+
+
+-- FOURTH DEPLOY THE CONFINGS AND THE SECRETS
+kubectl apply -f .\configMaps\keycloak-map.yaml 
+kubectl apply -f .\configMaps\mysql-map.yaml 
+kubectl apply -f .\configMaps\bd-script.yaml 
+kubectl apply -f .\configMaps\email-map.yaml 
+kubectl apply -f .\configMaps\gateway-map.yaml 
+kubectl apply -f .\configMaps\svc-inf-map.yaml 
+kubectl apply -f .\configMaps\svc-admin-map.yaml 
+kubectl apply -f .\configMaps\svc-register-map.yaml 
+kubectl apply -f .\configMaps\svc-web-map.yaml 
+kubectl apply -f .\Secrets\app_bd-secret.yaml
+
+
+-- TO DELETE THE CONFIGS AND THE SECRETS(IF HAPPEN A ERROR: First I have to delete the configs and after delete all services that depend of these configs or secret, after up the configs and after the services)
+kubectl delete -f .\configMaps\keycloak-map.yaml 
+kubectl delete -f .\configMaps\mysql-map.yaml 
+kubectl delete -f .\configMaps\bd-script.yaml 
+kubectl delete -f .\configMaps\email-map.yaml 
+kubectl delete -f .\configMaps\gateway-map.yaml 
+kubectl delete -f .\configMaps\svc-inf-map.yaml 
+kubectl delete -f .\configMaps\svc-admin-map.yaml 
+kubectl delete -f .\configMaps\svc-register-map.yaml 
+kubectl delete -f .\configMaps\svc-web-map.yaml 
+kubectl delete -f .\Secrets\app_bd-secret.yaml
+
+
+
+-- FIFTH DEPLOY THE SERVICES AND DOPS
+
+kubectl apply -f .\deployments\keycloak-auth-dep.yaml
+kubectl apply -f .\deployments\zookeeper-dep.yaml
+kubectl apply -f .\deployments\kafka-dep.yaml
+kubectl apply -f .\deployments\redis-dep.yaml
+kubectl apply -f .\deployments\mysql-dep.yaml
+kubectl apply -f .\deployments\phAdmin-dep.yaml
+kubectl apply -f .\deployments\gateway-dep.yaml
+kubectl apply -f .\deployments\server-administrator-dep.yaml
+kubectl apply -f .\deployments\server-information-dep.yaml
+kubectl apply -f .\deployments\server-register-dep.yaml
+kubectl apply -f .\deployments\web-page-dep.yaml
+
+
+-- OR DELETE (OPTIONAL IF HAPPEN A ERROR)
+
+kubectl delete -f .\deployments\phAdmin-dep.yaml
+kubectl delete -f .\deployments\keycloak-auth-dep.yaml
+kubectl delete -f .\deployments\zookeeper-dep.yaml
+kubectl delete -f .\deployments\kafka-dep.yaml
+kubectl delete -f .\deployments\redis-dep.yaml
+kubectl delete -f .\deployments\phAdmin-dep.yaml
+kubectl delete -f .\deployments\gateway-dep.yaml
+kubectl delete -f .\deployments\server-administrator-dep.yaml
+kubectl delete -f .\deployments\server-information-dep.yaml
+kubectl delete -f .\deployments\server-register-dep.yaml
+kubectl delete -f .\deployments\web-page-dep.yaml
+
+
+-- SIXTH CHECK THE SERVICES AND PODS
+
+kubectl get pods
+kubectl get services
+kubectl get configmaps
+kubectl get secrets
+kubectl logs 
+kubectl describe pod mysql8-5857df6d76-f7tl2 #To get the logs of a pods if the container wasnt created
+
+
+
+-- SEVENTH GET THE URL OF EACH SERVICE 
+minikube service server-administrator --url
+minikube service server-information --url
+minikube service server-register --url
+minikube service gateway --url
+minikube service web-page --url
+minikube service phpmyadmin --url
+minikube service keycloak --url
+
+
+-- some command very important
+kubectl get services
+kubectl logs dep-gateway-698f69dd94-ggf2x   
+kubectl delete -f .\deployments\gateway-dep.yaml
+kubectl describe pod dep-gateway-698f69dd94-ggf2x
+kubectl apply -f .\deployments\gateway-dep.yaml
+kubectl delete all --all
+
+
+
+
+
+--- STEP TO PERSISTS MY FOLDER FROM WINDOWS TO MINIKUBE 
+-- Map my folder of windows to minikube: But I have to keep on open this mapped in other terminal
+minikube mount "C:\Users\GAMER\Pictures\BASES STRUCTURE!!\KUBERNETES\father\KEYCLOAK INFORMATION:/mnt/data"
+
+-Check: enter to shell
+minikube ssh
+
+ls /mnt/data
+
+
+// enter to database
+
+
+kubectl run mysql-client --rm -it --image=mysql:8 -- bash -c "mysql -h mysql-server -u root -p"
+
+kubectl run mysql-client --rm -it --image=mysql:8 -- bash -c "mysql -h mysql-server -u root -p "
+kubectl run mysql-client --rm -it --image=mysql:8 -- bash -c "mysql -h mysql-server -u root -p 12345 "
+
+
+kubectl exec -it redis-dep-56c9c674dd-xb9cl -- redis-cli -a testing123

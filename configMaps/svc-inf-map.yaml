@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: svc-info-map
+data:
+
+  # Development Profile Overrides
+  spring.config.activate.on-profile: dev
+  app-server-dev: "server-information"
+  server.port-dev: "8111"
+  # MySQL R2DBC Connection
+  r2dbc-url-dev: "r2dbc:mysql://mysql-server:3306/mscv_information"
+  r2dbc-user-dev: "root"
+  r2dbc-pass-dev: "12345"
+
+  # Test Profile Overrides
+  curr.name.test: "test"  # Value for the test profile
+
+  # Production Profile Overrides
+  curr.name.prod: "prod"  # Value for the prod profile

@@ -1,0 +1,147 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dep-gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      role: dep-gateway
+  template:
+    metadata:
+      labels:
+        role: dep-gateway
+    spec:
+      containers:
+        - image: joshua76i/gateway-project2:latest
+          name: gateway
+          ports:
+            - containerPort: 8081
+          env:
+            # Map ConfigMap keys to environment variables
+            - name: SERVER_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: gateway-map
+                  key: SERVER_PORT
+
+            - name: ROUTE_SERVER_ADMIN_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: gateway-map
+                  key: ROUTE_SERVER_ADMIN_ID
+
+            - name: ROUTE_SERVER_ADMIN_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: gateway-map
+                  key: ROUTE_SERVER_ADMIN_URI
+
+            - name: ROUTE_SERVER_ADMIN_PREDICATE
+              valueFrom:
+                configMapKeyRef:
+                  name: gateway-map
+                  key: ROUTE_SERVER_ADMIN_PREDICATE
+
+            - name: ROUTE_WEB_PAGE_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: gateway-map
+                  key: ROUTE_WEB_PAGE_ID
+
+            - name: ROUTE_WEB_PAGE_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: gateway-map
+                  key: ROUTE_WEB_PAGE_URI
+
+            - name: ROUTE_WEB_PAGE_PREDICATE
+              valueFrom:
+                configMapKeyRef:
+                  name: gateway-map
+                  key: ROUTE_WEB_PAGE_PREDICATE
+
+            - name: MANAGEMENT_ENDPOINTS_EXPOSED
+              valueFrom:
+                configMapKeyRef:
+                  name: gateway-map
+                  key: MANAGEMENT_ENDPOINTS_EXPOSED
+
+            - name: MANAGEMENT_ENDPOINT_GATEWAY_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: gateway-map
+                  key: MANAGEMENT_ENDPOINT_GATEWAY_ENABLED
+
+            - name: REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: gateway-map
+                  key: REDIS_HOST
+
+            - name: REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: gateway-map
+                  key: REDIS_PORT
+
+            - name: JWT_ISSUER_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-map
+                  key: JWT_ISSUER_URI
+
+            - name: JWT_JWK_SET_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-map
+                  key: JWT_JWK_SET_URI
+
+            - name: KEYCLOAK_CLIENT_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-map
+                  key: KEYCLOAK_CLIENT_ID
+                  
+            
+            - name: REALM_APP
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-map
+                  key: REALM_APP
+            - name: SERVER_URL_KEY
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-map
+                  key: SERVER_URL
+
+            - name: CLIEN_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: ADMIN_SECRET
+
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: REDIS_PASSWORD
+
+            
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+spec:
+  type: LoadBalancer
+  ports:
+    - protocol: TCP
+      port: 8081
+      targetPort: 8081
+  selector:
+      role: dep-gateway
+
+    
