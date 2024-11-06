@@ -1,0 +1,121 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mysql-pv
+spec:
+  capacity:
+    storage: 2Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "C:/Users/GAMER/Pictures/MICRO-PROJEC2/Storage Mysql" # Adjust as needed
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-claim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql8
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql8
+  template:
+    metadata:
+      labels:
+        app: mysql8
+    spec:
+      containers:
+      - image: mysql:8
+        name: mysql8
+        ports:
+        - containerPort: 3306
+        env:
+          - name: MYSQL_ROOT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: app-secrets
+                key: MYSQL_PASSWORD
+          - name: MYSQL_DATABASE
+            valueFrom:
+              configMapKeyRef:
+                name: mysql-map
+                key: db-dev
+        volumeMounts:
+          - name: data-mysql
+            mountPath: /var/lib/mysql
+      volumes:
+        - name: data-mysql
+          persistentVolumeClaim:
+            claimName: mysql-claim
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-server
+spec:
+  ports:
+  - port: 3306
+    protocol: TCP
+    targetPort: 3306
+  selector:
+    app: mysql8
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: phpmyadmin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: phpmyadmin
+  template:
+    metadata:
+      labels:
+        app: phpmyadmin
+    spec:
+      containers:
+      - image: phpmyadmin/phpmyadmin
+        name: phpmyadmin
+        ports:
+        - containerPort: 80
+        env:
+          - name: PMA_HOST
+            value: "mysql-server"  # Must match the MySQL service name
+          - name: PMA_PORT
+            value: "3306"
+          - name: PMA_USER
+            valueFrom:
+              secretKeyRef:
+                name: app-secrets
+                key: MYSQL_USERNAME
+          - name: PMA_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: app-secrets
+                key: MYSQL_PASSWORD
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: phpmyadmin
+spec:
+  ports:
+    - port: 80
+      targetPort: 80
+  selector:
+    app: phpmyadmin
+  type: LoadBalancer

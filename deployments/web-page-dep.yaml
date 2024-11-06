@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-page-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web-page
+  template:
+    metadata:
+      labels:
+        app: web-page
+    spec:
+      containers:
+        - name: web-page
+          image: joshua76i/web-page-pr2:latest  # Ensure this image is available
+          ports:
+            - containerPort: 8903  # Port that your application listens on
+          env:
+            - name: REDIS_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: REDIS_PASSWORD
+            - name: SERVER_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: svc-web-map
+                  key: server.port-dev
+            - name: REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: svc-web-map
+                  key: redis_host-dev
+            - name: REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: svc-web-map
+                  key: redis_port-dev
+            - name: KAFKA_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: svc-web-map
+                  key: kafka_host-dev
+            - name: SERVER_INF_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: svc-web-map
+                  key: info-server-port-dev
+            - name: SERVER_INF_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: svc-web-map
+                  key: info-server-dev
+            - name: SERVER_INF_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: svc-web-map
+                  key: info-server-uri-dev
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-page
+spec:
+  type: LoadBalancer
+  ports:
+    - protocol: TCP
+      port: 8093         
+      targetPort: 8903 
+  selector:
+    app: web-page

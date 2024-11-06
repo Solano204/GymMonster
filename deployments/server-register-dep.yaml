@@ -1,0 +1,114 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server-register-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: server-register
+  template:
+    metadata:
+      labels:
+        app: server-register
+    spec:
+      containers:
+        - name: server-register
+          image: joshua76i/server-register-pr2:latest
+          ports:
+            - containerPort: 8902
+          env:
+            - name: SERVER_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: svc-register-map
+                  key: server.port-dev
+
+            - name: R2DBC_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: svc-register-map
+                  key: r2dbc-url-dev
+            - name: KAFKA_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: svc-register-map
+                  key: kafka_host-dev
+
+            # Secret values
+            - name: R2DBC_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: MYSQL_USERNAME
+            - name: R2DBC_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: MYSQL_PASSWORD
+            - name: EMAIL_SENDER
+              valueFrom:
+                configMapKeyRef:
+                  name: email-map
+                  key: EMAIL-FROM
+
+            - name: EMAIL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: EMAIL_PASSWORD
+
+            - name: REALM_MASTER
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-map
+                  key: MASTER-KEY
+
+            - name: USER_CONSOLE
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-map
+                  key: USERNAME-KEY
+
+            - name: ADMIN_CLI
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-map
+                  key: ADMIN-CLI
+
+            - name: ADMIN_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: ADMIN_SECRET
+
+            - name: REALM_APP
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-map
+                  key: REALM_APP
+
+            - name: PASSWORD_CONSOLE
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: PASSWORD-KEY
+            - name: SERVER_URL_KEY
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-map
+                  key: SERVER_URL
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: server-register
+spec:
+  type: LoadBalancer
+  ports:
+    - protocol: TCP
+      port: 8902
+      targetPort: 8902
+  selector:
+    app: server-register

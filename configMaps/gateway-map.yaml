@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gateway-map
+data:
+  SERVER_PORT: "8081"
+  
+  # Gateway Routes
+  ROUTE_SERVER_ADMIN_ID: "server-administrator"
+  ROUTE_SERVER_ADMIN_URI: "lb://server-administrator"
+  ROUTE_SERVER_ADMIN_PREDICATE: "Path=/api/admin/**"
+  
+  ROUTE_WEB_PAGE_ID: "web-page"
+  ROUTE_WEB_PAGE_URI: "lb://web-page"
+  ROUTE_WEB_PAGE_PREDICATE: "Path=/api/page/**"
+  
+  MANAGEMENT_ENDPOINTS_EXPOSED: "gateway"
+  MANAGEMENT_ENDPOINT_GATEWAY_ENABLED: "true"
+
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  

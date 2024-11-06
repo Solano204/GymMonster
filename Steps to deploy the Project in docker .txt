@@ -19,7 +19,7 @@ docker tag server-register:v1 joshua76i/server-register-pr2:latest
 docker tag web-page:v1 joshua76i/web-page-pr2:latest
 
 
-
+--- THIRD PUSH THE IMAGES
 docker push joshua76i/eurecka-pr2:latest
 docker push joshua76i/config-server-pr2:latest
 docker push joshua76i/gateway-project2:latest

@@ -1,4 +1,3 @@
- gym database
 
 
 -- Drop tables with foreign key dependencies first
@@ -24,6 +23,3 @@ DROP TABLE IF EXISTS schedulesGym;
 DROP TABLE IF EXISTS promotion;
 DROP TABLE IF EXISTS equipament;
 DROP TABLE IF EXISTS pool;
-
--- Confirm all tables are deleted
-SHOW TABLES;
