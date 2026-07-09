@@ -33,6 +33,26 @@ spec:
                 configMapKeyRef:
                   name: svc-admin-map
                   key: info-server-uri-dev
+            - name: JWT_ISSUER_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-map
+                  key: JWT_ISSUER_URI
+            - name: JWT_JWK_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-map
+                  key: JWT_JWK_SET_URI
+            - name: JWT_RESOURCE_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-map
+                  key: JWT_RESOURCE_ID
+            - name: JWT_PRINCIPAL_ATTR
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-map
+                  key: JWT_PRINCIPLE_ATTRIBUTE
 
 ---
 
