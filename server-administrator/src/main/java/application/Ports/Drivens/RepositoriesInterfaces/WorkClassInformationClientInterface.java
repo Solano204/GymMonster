@@ -6,7 +6,7 @@ import infraestrucutre.Adapters.Drivens.Entities.WorkClass;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-public interface WorkClassRepositoryInterface {
+public interface WorkClassInformationClientInterface {
 
     Flux<WorkClass> getAllWorkClasses();
 

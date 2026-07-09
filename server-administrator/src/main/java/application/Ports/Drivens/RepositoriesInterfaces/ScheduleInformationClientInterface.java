@@ -3,7 +3,7 @@ import infraestrucutre.Adapters.Drivens.Entities.Schedule;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-public interface ScheduleRepositoryInterface {
+public interface ScheduleInformationClientInterface {
 
     Mono<Schedule> createSchedule(Schedule schedule);
 

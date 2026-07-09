@@ -3,7 +3,7 @@ package application.Ports.Drivers.IServices;
 import org.springframework.stereotype.Service;
 
 import infraestrucutre.Adapters.Drivens.DTOS.DtoSpecialtyRecived;
-import infraestrucutre.Adapters.Drivens.Repositories.SpecialtyRepository;
+import infraestrucutre.Adapters.Drivens.Repositories.SpecialtyInformationClient;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import reactor.core.publisher.Flux;

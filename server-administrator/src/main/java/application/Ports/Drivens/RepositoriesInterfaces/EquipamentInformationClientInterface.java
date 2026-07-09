@@ -3,7 +3,7 @@ import infraestrucutre.Adapters.Drivens.Entities.Equipament;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-public interface EquipamentRepositoryInterface {
+public interface EquipamentInformationClientInterface {
 
     Mono<Equipament> createEquipament(Equipament equipament);
     Flux<Equipament> getAllEquipaments();

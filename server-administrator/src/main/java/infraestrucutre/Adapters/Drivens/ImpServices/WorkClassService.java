@@ -2,7 +2,7 @@ package infraestrucutre.Adapters.Drivens.ImpServices;
 
 import org.springframework.stereotype.Service;
 
-import application.Ports.Drivens.RepositoriesInterfaces.WorkClassRepositoryInterface;
+import application.Ports.Drivens.RepositoriesInterfaces.WorkClassInformationClientInterface;
 import application.Ports.Drivers.IServices.WorkClassInterface;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoDetailUserReciving;
 import infraestrucutre.Adapters.Drivens.Entities.Schedule;
@@ -19,7 +19,7 @@ import java.util.List;
 @Data
 public class WorkClassService implements WorkClassInterface {
 
-    private final WorkClassRepositoryInterface workClassRepository;
+    private final WorkClassInformationClientInterface workClassRepository;
     @Override
     public Flux<WorkClass> getAllWorkClasses() {
         return workClassRepository.getAllWorkClasses();

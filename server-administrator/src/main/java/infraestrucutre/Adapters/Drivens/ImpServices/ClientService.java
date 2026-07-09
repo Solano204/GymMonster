@@ -6,14 +6,14 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import application.Ports.Drivens.RepositoriesInterfaces.ClientRepositoryInterface;
+import application.Ports.Drivens.RepositoriesInterfaces.ClientInformationClientInterface;
 import application.Ports.Drivers.IServices.ClientServiceInterface;
 import ch.qos.logback.core.net.server.Client;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoDetailUserSent;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoInfoGeneralClient;
 import infraestrucutre.Adapters.Drivens.Entities.AllClient;
 import infraestrucutre.Adapters.Drivens.Entities.WorkClass;
-import infraestrucutre.Adapters.Drivens.Repositories.ClientRepository;
+import infraestrucutre.Adapters.Drivens.Repositories.ClientInformationClient;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import reactor.core.publisher.Flux;
@@ -27,7 +27,7 @@ import java.util.List;
 @Service
 @Data
     public class ClientService implements ClientServiceInterface {
-    private final ClientRepositoryInterface clientRepository;
+    private final ClientInformationClientInterface clientRepository;
 
     @Override
     public Mono<List<AllClient>> getAllClients() {

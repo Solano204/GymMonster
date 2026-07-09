@@ -21,12 +21,12 @@ import org.springframework.security.web.authentication.password.HaveIBeenPwnedRe
 
 import static org.springframework.http.MediaType.*;
 
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 // import static org.springframework.web.reactive.function.BodyInserters.*;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import application.Ports.Drivens.RepositoriesInterfaces.ClientRepositoryInterface;
+import application.Ports.Drivens.RepositoriesInterfaces.ClientInformationClientInterface;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoDetailUserReciving;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoDetailUserSent;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoInfoGeneralClient;
@@ -42,9 +42,9 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
         @Data
-        @Repository
+        @Component
         @AllArgsConstructor
-        public class ClientRepository implements ClientRepositoryInterface {
+        public class ClientInformationClient implements ClientInformationClientInterface {
 
                 private final HaveIBeenPwnedRestApiReactivePasswordChecker passwordChecker;
                 private final WebClient.Builder webClientBuilder;

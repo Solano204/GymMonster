@@ -2,19 +2,19 @@ package infraestrucutre.Adapters.Drivens.ImpServices;
 
 import org.springframework.stereotype.Service;
 
-import application.Ports.Drivens.RepositoriesInterfaces.SpecialtyRepositoryInterface;
+import application.Ports.Drivens.RepositoriesInterfaces.SpecialtyInformationClientInterface;
 import application.Ports.Drivers.IServices.SpecialtyServiceInterface;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoSpecialtyRecived;
-import infraestrucutre.Adapters.Drivens.Repositories.SpecialtyRepository;
+import infraestrucutre.Adapters.Drivens.Repositories.SpecialtyInformationClient;
 import lombok.Data;
 
 @Service
 @Data
 public class SpecialtyService implements SpecialtyServiceInterface {
 
-    private final SpecialtyRepositoryInterface specialtyRepository; // Inject your repository here
+    private final SpecialtyInformationClientInterface specialtyRepository; // Inject your repository here
 
 
 

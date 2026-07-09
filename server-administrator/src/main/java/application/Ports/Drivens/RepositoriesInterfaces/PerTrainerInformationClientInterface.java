@@ -8,7 +8,7 @@ import infraestrucutre.Adapters.Drivens.DTOS.DtoSpecialtyRecived;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoTrainerData;
 import infraestrucutre.Adapters.Drivens.Entities.AllTrainer;
 
-public interface PerTrainerRepositoryInterface {
+public interface PerTrainerInformationClientInterface {
 
     Mono<String> createPerTrainer(AllTrainer newTrainer);
     Flux<DtoTrainerData> getAllTrainers(int page, int size);

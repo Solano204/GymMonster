@@ -4,10 +4,10 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.springframework.stereotype.Service;
 
-import application.Ports.Drivens.RepositoriesInterfaces.ScheduleRepositoryInterface;
+import application.Ports.Drivens.RepositoriesInterfaces.ScheduleInformationClientInterface;
 import application.Ports.Drivers.IServices.ScheduleInterface;
 import infraestrucutre.Adapters.Drivens.Entities.Schedule;
-import infraestrucutre.Adapters.Drivens.Repositories.ScheduleRepository;
+import infraestrucutre.Adapters.Drivens.Repositories.ScheduleInformationClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -19,7 +19,7 @@ import java.util.List;
 @Data
 public class ScheduleService implements ScheduleInterface {
 
-    private final ScheduleRepositoryInterface scheduleRepository;
+    private final ScheduleInformationClientInterface scheduleRepository;
 
     // In-memory cache for schedules (if needed)
     // Create a new schedule

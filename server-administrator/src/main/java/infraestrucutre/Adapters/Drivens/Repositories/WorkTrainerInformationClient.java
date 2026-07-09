@@ -5,10 +5,10 @@ import java.util.Collections;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.security.web.authentication.password.HaveIBeenPwnedRestApiReactivePasswordChecker;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import application.Ports.Drivens.RepositoriesInterfaces.WorkTrainerRepositoryInterface;
+import application.Ports.Drivens.RepositoriesInterfaces.WorkTrainerInformationClientInterface;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoDetailUserReciving;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoDetailUserSent;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoTrainerData;
@@ -22,15 +22,11 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
-import infraestrucutre.Adapters.Drivens.DTOS.DtoDetailUserReciving;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoSpecialtyRecived;
-import infraestrucutre.Adapters.Drivens.DTOS.DtoTrainerData;
-import infraestrucutre.Adapters.Drivens.Entities.AllTrainer;
-import infraestrucutre.Adapters.Drivens.Entities.WorkClass;
 @Data
-@Repository
+@Component
 @AllArgsConstructor
-public class WorkTrainerRepository implements WorkTrainerRepositoryInterface {
+public class WorkTrainerInformationClient implements WorkTrainerInformationClientInterface {
 
     private final HaveIBeenPwnedRestApiReactivePasswordChecker passwordChecker;
     private final WebClient.Builder webClientBuilder;

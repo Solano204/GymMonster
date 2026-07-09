@@ -11,7 +11,7 @@ import infraestrucutre.Adapters.Drivens.DTOS.DtoTrainerData;
 import infraestrucutre.Adapters.Drivens.Entities.AllTrainer;
 import infraestrucutre.Adapters.Drivens.Entities.WorkClass;
 
-public interface WorkTrainerRepositoryInterface {
+public interface WorkTrainerInformationClientInterface {
 
     Mono<String> createClassTrainer(AllTrainer trainer);
 

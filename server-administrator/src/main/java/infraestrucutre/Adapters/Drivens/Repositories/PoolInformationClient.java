@@ -2,11 +2,11 @@ package infraestrucutre.Adapters.Drivens.Repositories;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import application.Ports.Drivens.RepositoriesInterfaces.PoolRepositoryInterface;
+import application.Ports.Drivens.RepositoriesInterfaces.PoolInformationClientInterface;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoPoolSent;
 import infraestrucutre.Adapters.Drivens.Properties.ServicesUrl;
 import lombok.AllArgsConstructor;
@@ -14,16 +14,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import lombok.AllArgsConstructor;
-import org.springframework.stereotype.Repository;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.http.MediaType;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
-@Repository
+@Component
 @AllArgsConstructor
-public class PoolRepository implements PoolRepositoryInterface {
+public class PoolInformationClient implements PoolInformationClientInterface {
     
     private final WebClient.Builder webClientBuilder;
     private final ServicesUrl servicesUrl;

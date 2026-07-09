@@ -3,7 +3,7 @@ import infraestrucutre.Adapters.Drivens.DTOS.DtoPoolSent;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-public interface PoolRepositoryInterface {
+public interface PoolInformationClientInterface {
 
     // Get all pools
     Flux<DtoPoolSent> getAllPools();

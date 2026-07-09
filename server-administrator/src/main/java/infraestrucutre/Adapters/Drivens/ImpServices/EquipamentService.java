@@ -1,19 +1,19 @@
 package infraestrucutre.Adapters.Drivens.ImpServices;
 import org.springframework.stereotype.Service;
 
-import application.Ports.Drivens.RepositoriesInterfaces.EquipamentRepositoryInterface;
+import application.Ports.Drivens.RepositoriesInterfaces.EquipamentInformationClientInterface;
 import application.Ports.Drivers.IServices.EquipamentServiceInterface;
 import infraestrucutre.Adapters.Drivens.Entities.Equipament;
-import infraestrucutre.Adapters.Drivens.Repositories.EquipamentRepository;
+import infraestrucutre.Adapters.Drivens.Repositories.EquipamentInformationClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Service
 public class EquipamentService implements EquipamentServiceInterface {
 
-    private final EquipamentRepositoryInterface equipamentRepository;
+    private final EquipamentInformationClientInterface equipamentRepository;
 
-    public EquipamentService(EquipamentRepository equipamentRepository) {
+    public EquipamentService(EquipamentInformationClient equipamentRepository) {
         this.equipamentRepository = equipamentRepository;
     }
 

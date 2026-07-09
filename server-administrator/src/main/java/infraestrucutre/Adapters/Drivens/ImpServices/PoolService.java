@@ -1,10 +1,10 @@
 package infraestrucutre.Adapters.Drivens.ImpServices;
 import org.springframework.stereotype.Service;
 
-import application.Ports.Drivens.RepositoriesInterfaces.PoolRepositoryInterface;
+import application.Ports.Drivens.RepositoriesInterfaces.PoolInformationClientInterface;
 import application.Ports.Drivers.IServices.PoolServiceInterface;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoPoolSent;
-import infraestrucutre.Adapters.Drivens.Repositories.PoolRepository;
+import infraestrucutre.Adapters.Drivens.Repositories.PoolInformationClient;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import reactor.core.publisher.Flux;
@@ -18,9 +18,9 @@ import reactor.core.publisher.Mono;
 @Service
 public class PoolService implements PoolServiceInterface {
 
-    private final PoolRepositoryInterface poolRepository; // Inject your repository here
+    private final PoolInformationClientInterface poolRepository; // Inject your repository here
 
-    public PoolService(PoolRepository poolRepository) {
+    public PoolService(PoolInformationClient poolRepository) {
         this.poolRepository = poolRepository;
     }
 

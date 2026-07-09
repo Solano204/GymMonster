@@ -3,19 +3,19 @@ package infraestrucutre.Adapters.Drivens.Repositories;
 import java.util.Collections;
 
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import application.Ports.Drivens.RepositoriesInterfaces.ScheduleRepositoryInterface;
+import application.Ports.Drivens.RepositoriesInterfaces.ScheduleInformationClientInterface;
 import infraestrucutre.Adapters.Drivens.Entities.Schedule;
 import infraestrucutre.Adapters.Drivens.Properties.ServicesUrl;
 import lombok.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-@Repository
+@Component
 @AllArgsConstructor
-public class ScheduleRepository implements ScheduleRepositoryInterface {
+public class ScheduleInformationClient implements ScheduleInformationClientInterface {
 
     private final WebClient.Builder webClientBuilder;
            private final ServicesUrl servicesUrl;

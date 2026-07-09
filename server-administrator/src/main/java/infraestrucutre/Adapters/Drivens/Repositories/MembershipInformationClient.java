@@ -2,11 +2,11 @@ package infraestrucutre.Adapters.Drivens.Repositories;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import application.Ports.Drivens.RepositoriesInterfaces.MembershipRepositoryInterface;
+import application.Ports.Drivens.RepositoriesInterfaces.MembershipInformationClientInterface;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoMembershipReciving;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoMembershipSent;
 import infraestrucutre.Adapters.Drivens.Properties.ServicesUrl;
@@ -14,16 +14,10 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import lombok.AllArgsConstructor;
-import org.springframework.stereotype.Repository;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.http.MediaType;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
-@Repository
+@Component
 @AllArgsConstructor
-public class MembershipRepository implements MembershipRepositoryInterface {
+public class MembershipInformationClient implements MembershipInformationClientInterface {
 
 
 

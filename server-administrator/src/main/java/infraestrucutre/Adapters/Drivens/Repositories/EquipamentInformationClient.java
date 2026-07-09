@@ -6,16 +6,16 @@ import reactor.core.publisher.Mono;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import application.Ports.Drivens.RepositoriesInterfaces.EquipamentRepositoryInterface;
+import application.Ports.Drivens.RepositoriesInterfaces.EquipamentInformationClientInterface;
 import infraestrucutre.Adapters.Drivens.Entities.Equipament;
 import infraestrucutre.Adapters.Drivens.Properties.ServicesUrl;
 @Data
-@Repository
-public class EquipamentRepository implements EquipamentRepositoryInterface {
+@Component
+public class EquipamentInformationClient implements EquipamentInformationClientInterface {
 
 
     private final WebClient.Builder webClientBuilder;

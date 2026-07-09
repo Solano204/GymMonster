@@ -4,7 +4,7 @@ import org.springframework.security.authentication.password.CompromisedPasswordD
 import org.springframework.security.web.authentication.password.HaveIBeenPwnedRestApiReactivePasswordChecker;
 import org.springframework.stereotype.Service;
 
-import application.Ports.Drivens.RepositoriesInterfaces.WorkTrainerRepositoryInterface;
+import application.Ports.Drivens.RepositoriesInterfaces.WorkTrainerInformationClientInterface;
 import application.Ports.Drivers.IServices.ClassTrainerServiceInterface;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoDetailUserReciving;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoSpecialtyRecived;
@@ -25,7 +25,7 @@ import java.util.List;
 @AllArgsConstructor
 public class ClassTrainerService implements ClassTrainerServiceInterface {
 
-    private final WorkTrainerRepositoryInterface classTrainerRepository;
+    private final WorkTrainerInformationClientInterface classTrainerRepository;
 
     // Method to create a new trainer
     @Override

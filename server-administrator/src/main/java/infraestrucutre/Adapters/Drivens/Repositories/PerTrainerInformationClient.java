@@ -6,10 +6,10 @@ import java.util.List;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.security.web.authentication.password.HaveIBeenPwnedRestApiReactivePasswordChecker;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import application.Ports.Drivens.RepositoriesInterfaces.PerTrainerRepositoryInterface;
+import application.Ports.Drivens.RepositoriesInterfaces.PerTrainerInformationClientInterface;
 import application.Ports.Drivers.IServices.PerTrainerInterface;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoTrainerData;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoDetailUserReciving;
@@ -20,9 +20,9 @@ import lombok.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-@Repository
+@Component
 @AllArgsConstructor
-public class PerTrainerRepository implements PerTrainerRepositoryInterface {
+public class PerTrainerInformationClient implements PerTrainerInformationClientInterface {
 
     private final WebClient.Builder webClientBuilder;
     private final ServicesUrl servicesUrl;

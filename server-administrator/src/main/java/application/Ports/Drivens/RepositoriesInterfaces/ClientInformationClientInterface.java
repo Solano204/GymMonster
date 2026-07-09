@@ -8,7 +8,7 @@ import infraestrucutre.Adapters.Drivens.DTOS.DtoDetailUserSent;
 import infraestrucutre.Adapters.Drivens.Entities.AllClient;
 import infraestrucutre.Adapters.Drivens.Entities.WorkClass;
 
-public interface ClientRepositoryInterface {
+public interface ClientInformationClientInterface {
 
     Mono<List<AllClient>> getAllClients();
 

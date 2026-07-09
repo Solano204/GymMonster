@@ -4,7 +4,7 @@ import infraestrucutre.Adapters.Drivens.DTOS.DtoMembershipReciving;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-public interface MembershipRepositoryInterface {
+public interface MembershipInformationClientInterface {
 
     Flux<DtoMembershipReciving> getAllMemberships();
     Mono<DtoMembershipReciving> getMembershipByType(String type);

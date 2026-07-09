@@ -9,11 +9,11 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.password.CompromisedPasswordDecision;
 import org.springframework.security.web.authentication.password.HaveIBeenPwnedRestApiReactivePasswordChecker;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import application.Ports.Drivens.RepositoriesInterfaces.WorkClassRepositoryInterface;
-import application.Ports.Drivens.RepositoriesInterfaces.WorkTrainerRepositoryInterface;
+import application.Ports.Drivens.RepositoriesInterfaces.WorkClassInformationClientInterface;
+import application.Ports.Drivens.RepositoriesInterfaces.WorkTrainerInformationClientInterface;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoTrainerData;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoDetailUserReciving;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoDetailUserSent;
@@ -25,26 +25,12 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import org.springframework.http.MediaType;
-import org.springframework.stereotype.Repository;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
-import java.util.List;
-import org.springframework.http.MediaType;
-import org.springframework.stereotype.Repository;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
-import java.util.List;
 
-@Repository
+@Component
 @AllArgsConstructor
-public class WorkClassRepositoryImpl implements WorkClassRepositoryInterface {
+public class WorkClassInformationClientImpl implements WorkClassInformationClientInterface {
 
     private final WebClient.Builder webClientBuilder;
                    private final ServicesUrl servicesUrl;

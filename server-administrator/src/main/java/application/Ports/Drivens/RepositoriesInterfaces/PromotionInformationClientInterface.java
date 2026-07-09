@@ -6,7 +6,7 @@ import java.time.LocalDate;
 import infraestrucutre.Adapters.Drivens.Entities.Promotion;
 
 
-public interface PromotionRepositoryInterface {
+public interface PromotionInformationClientInterface {
 
     // Get all promotions
     Flux<Promotion> getAllPromotions();

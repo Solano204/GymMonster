@@ -7,15 +7,15 @@ import org.springframework.security.authentication.password.CompromisedPasswordD
 import org.springframework.security.web.authentication.password.HaveIBeenPwnedRestApiReactivePasswordChecker;
 import org.springframework.stereotype.Service;
 
-import application.Ports.Drivens.RepositoriesInterfaces.PerTrainerRepositoryInterface;
+import application.Ports.Drivens.RepositoriesInterfaces.PerTrainerInformationClientInterface;
 import application.Ports.Drivers.IServices.PerTrainerInterface;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoDetailUserReciving;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoSpecialtyRecived;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoTrainerData;
 import infraestrucutre.Adapters.Drivens.Entities.AllTrainer;
 import infraestrucutre.Adapters.Drivens.Entities.WorkClass;
-import infraestrucutre.Adapters.Drivens.Repositories.ClientRepository;
-import infraestrucutre.Adapters.Drivens.Repositories.PerTrainerRepository;
+import infraestrucutre.Adapters.Drivens.Repositories.ClientInformationClient;
+import infraestrucutre.Adapters.Drivens.Repositories.PerTrainerInformationClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -33,7 +33,7 @@ import java.util.List;
 public class PerTrainerImpl implements PerTrainerInterface {
 
 
-     private final PerTrainerRepositoryInterface clientRepository; // Inject your repository
+     private final PerTrainerInformationClientInterface clientRepository; // Inject your repository
 
     @Override
     public Mono<String> createPerTrainer(AllTrainer newTrainer) {

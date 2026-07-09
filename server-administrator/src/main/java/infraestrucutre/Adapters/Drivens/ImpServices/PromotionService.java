@@ -2,7 +2,7 @@ package infraestrucutre.Adapters.Drivens.ImpServices;
 
 import org.springframework.stereotype.Service;
 
-import application.Ports.Drivens.RepositoriesInterfaces.PromotionRepositoryInterface;
+import application.Ports.Drivens.RepositoriesInterfaces.PromotionInformationClientInterface;
 import application.Ports.Drivers.IServices.PromotionInterface;
 import infraestrucutre.Adapters.Drivens.Entities.Promotion;
 import lombok.AllArgsConstructor;
@@ -17,7 +17,7 @@ import java.util.List;
 @AllArgsConstructor
 public class PromotionService implements PromotionInterface {
 
-    private final PromotionRepositoryInterface promotionRepository;
+    private final PromotionInformationClientInterface promotionRepository;
 
     // Fetch all promotions
 

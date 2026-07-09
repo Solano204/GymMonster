@@ -2,11 +2,11 @@ package infraestrucutre.Adapters.Drivens.ImpServices;
 
  import org.springframework.stereotype.Service;
 
-import application.Ports.Drivens.RepositoriesInterfaces.MembershipRepositoryInterface;
+import application.Ports.Drivens.RepositoriesInterfaces.MembershipInformationClientInterface;
 import application.Ports.Drivers.IServices.MembershipServiceInterface;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoMembershipReciving;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoMembershipSent;
-import infraestrucutre.Adapters.Drivens.Repositories.MembershipRepository;
+import infraestrucutre.Adapters.Drivens.Repositories.MembershipInformationClient;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import reactor.core.publisher.Flux;
@@ -20,7 +20,7 @@ import reactor.core.publisher.Mono;
 @Data
 public class MembershipService implements MembershipServiceInterface {
 
-    private final MembershipRepositoryInterface membershipRepository; // Inject your repository here
+    private final MembershipInformationClientInterface membershipRepository; // Inject your repository here
 
 
     @Override

@@ -4,7 +4,7 @@ import infraestrucutre.Adapters.Drivens.DTOS.DtoSpecialtyRecived;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-public interface SpecialtyRepositoryInterface {
+public interface SpecialtyInformationClientInterface {
 
     Flux<DtoSpecialtyRecived> getAllSpecialties();
 
