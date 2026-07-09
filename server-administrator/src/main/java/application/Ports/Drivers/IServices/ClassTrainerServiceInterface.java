@@ -3,7 +3,6 @@ package application.Ports.Drivers.IServices;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import reactor.core.publisher.Mono;
 import java.util.List;
 
 import infraestrucutre.Adapters.Drivens.DTOS.DtoDetailUserReciving;
@@ -13,10 +12,7 @@ import infraestrucutre.Adapters.Drivens.Entities.AllTrainer;
 import infraestrucutre.Adapters.Drivens.Entities.DetailsUser;
 import infraestrucutre.Adapters.Drivens.Entities.WorkClass;
 
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
-import java.util.List;
 
 public interface ClassTrainerServiceInterface {
     Mono<String> createClassTrainer(AllTrainer trainer);

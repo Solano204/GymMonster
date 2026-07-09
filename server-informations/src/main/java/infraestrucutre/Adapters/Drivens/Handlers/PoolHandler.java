@@ -19,7 +19,6 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
 import application.Ports.Drivers.IServices.PoolServiceInterface;
-import ch.qos.logback.core.subst.Token;
 import infraestrucutre.Adapters.Drivens.Entities.Pool;
 import infraestrucutre.Adapters.Drivens.ImpServices.PoolService;
 import lombok.AllArgsConstructor;

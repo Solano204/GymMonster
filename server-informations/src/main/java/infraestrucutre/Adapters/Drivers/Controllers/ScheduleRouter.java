@@ -11,7 +11,6 @@ import reactor.core.publisher.Flux;
 
 import static org.springframework.web.reactive.function.server.RouterFunctions.*;
 import static org.springframework.web.reactive.function.server.RequestPredicates.*;
-import org.springframework.web.reactive.function.server.RouterFunction;
 
 @Component
 public class ScheduleRouter {

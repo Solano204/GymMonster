@@ -9,7 +9,6 @@ import lombok.Data;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public interface SpecialtyServiceInterface {

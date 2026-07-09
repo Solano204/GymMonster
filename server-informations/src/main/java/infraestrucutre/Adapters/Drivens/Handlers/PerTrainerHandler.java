@@ -12,7 +12,6 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
 import application.Ports.Drivers.IServices.PerTrainerServiceInterface;
-import ch.qos.logback.core.subst.Token;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoInfoTrainer;
 import infraestrucutre.Adapters.Drivens.Entities.AllTrainer;
 import infraestrucutre.Adapters.Drivens.Entities.DetailPerTrainer;

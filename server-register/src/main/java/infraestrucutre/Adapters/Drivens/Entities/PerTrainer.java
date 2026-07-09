@@ -17,7 +17,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import reactor.core.publisher.Flux;
-import lombok.Data;
 
 @Table("per_trainer")
 public class PerTrainer extends User {

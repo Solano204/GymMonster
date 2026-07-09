@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 
 import application.Ports.Drivens.RepositoriesInterfaces.ClientInformationClientInterface;
 import application.Ports.Drivers.IServices.ClientServiceInterface;
-import ch.qos.logback.core.net.server.Client;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoDetailUserSent;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoInfoGeneralClient;
 import infraestrucutre.Adapters.Drivens.Entities.AllClient;
@@ -18,11 +17,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import org.springframework.stereotype.Service;
-import lombok.Data;
-import reactor.core.publisher.Mono;
-import java.util.ArrayList;
-import java.util.List;
 
 @Service
 @Data

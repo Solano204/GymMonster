@@ -3,7 +3,6 @@ package application.Ports.Drivers.IServices;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoPoolSent;
 import reactor.core.publisher.Flux;
 
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public interface PoolServiceInterface {
