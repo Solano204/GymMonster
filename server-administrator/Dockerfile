@@ -1,6 +1,6 @@
-# FIRST STAGE: Building stage 
+# FIRST STAGE: Building stage
 # Here I create the JAR with the necessary files such as pom.xml, mvnw, and other dependencies, and generate the JAR
-FROM openjdk:23-ea-21-jdk as builder
+FROM eclipse-temurin:21-jdk AS builder
 WORKDIR /app/server-administrator-service
 
 # Copy the main pom.xml
@@ -24,7 +24,7 @@ RUN ./mvnw clean package -DskipTests
 
 # SECOND STAGE: Creating the final Docker image
 # Here I only copy the JAR created in the first stage, making the image lightweight
-FROM openjdk:23-ea-21-jdk
+FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 
@@ -32,11 +32,10 @@ WORKDIR /app
 COPY --from=builder /app/server-administrator-service/target/server-administrator-0.0.1-SNAPSHOT.jar /app/app-server-administrator.jar
 
 # Expose the port for the Server Administrator
-EXPOSE 8901
+EXPOSE 8900
 
 # Set the entry point with the new name
 ENTRYPOINT ["java", "-jar", "app-server-administrator.jar"]
 
-# docker build --no-cache -t server-administrator:v1 . -f ./server-administrator/Dockerfile
-# docker run -p 8003:80 -d --rm --name msvc-cursos --network spring cursos:v1
+# docker build --no-cache -t server-administrator:v1 -f ./server-administrator/Dockerfile .
 

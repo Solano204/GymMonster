@@ -1,6 +1,6 @@
-# FIRST STAGE: Building stage 
+# FIRST STAGE: Building stage
 # Here I create the JAR with the necessary files such as pom.xml, mvnw, and other dependencies and generate the JAR
-FROM openjdk:23-ea-21-jdk as builder
+FROM eclipse-temurin:21-jdk AS builder
 WORKDIR /app/apigateway-service
 
 # Copy the pom from the main directory
@@ -24,7 +24,7 @@ RUN ./mvnw clean package -DskipTests
 
 # SECOND STAGE: Creating the final Docker image
 # Here I only copy the JAR created in the first stage, making the image lightweight.
-FROM openjdk:23-ea-21-jdk
+FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 
@@ -32,10 +32,9 @@ WORKDIR /app
 COPY --from=builder /app/apigateway-service/target/gateway-0.0.1-SNAPSHOT.jar /app/app-apigateway.jar
 
 # Expose the port for the API Gateway
-EXPOSE 8080
+EXPOSE 8081
 
 # Set the entry point with the new name
 ENTRYPOINT ["java", "-jar", "app-apigateway.jar"]
 
-# docker build --no-cache -t gateway-server:v1 . -f ./gateway/Dockerfile
-# docker run -p 8002:80 -d --rm --name msvc-cursos --network spring cursos:v1
+# docker build --no-cache -t gateway-server:v1 -f ./gateway/Dockerfile .

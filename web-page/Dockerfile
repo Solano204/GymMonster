@@ -1,5 +1,5 @@
 # FIRST STAGE: Building stage
-FROM openjdk:23-ea-21-jdk as builder
+FROM eclipse-temurin:21-jdk AS builder
 WORKDIR /app/web-page-service
 
 # Copy main pom and other necessary files
@@ -21,7 +21,7 @@ RUN ./mvnw clean package -DskipTests
 
 
 # SECOND STAGE: Final image creation
-FROM openjdk:23-ea-21-jdk
+FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 
@@ -33,3 +33,5 @@ EXPOSE 8903
 
 # Entry point
 ENTRYPOINT ["java", "-jar", "app-web-page.jar"]
+
+# docker build --no-cache -t web-page:v1 -f ./web-page/Dockerfile .

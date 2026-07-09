@@ -1,5 +1,5 @@
 # FIRST STAGE: Building stage
-FROM openjdk:23-ea-21-jdk as builder
+FROM eclipse-temurin:21-jdk AS builder
 WORKDIR /app/server-information-service
 
 # Copy main pom and other necessary files
@@ -21,7 +21,7 @@ RUN ./mvnw clean package -DskipTests
 
 
 # SECOND STAGE: Final image creation
-FROM openjdk:23-ea-21-jdk
+FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 
@@ -34,4 +34,4 @@ EXPOSE 8111
 # Entry point
 ENTRYPOINT ["java", "-jar", "app-server-information.jar"]
 
-# docker build --no-cache -t server-information:v1 . -f ./server-information/Dockerfile
+# docker build --no-cache -t server-information:v1 -f ./server-informations/Dockerfile .
