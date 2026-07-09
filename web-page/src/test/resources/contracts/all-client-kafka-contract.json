@@ -1,0 +1,19 @@
+{
+  "id": 1,
+  "username": "contract-test-user",
+  "password": "contract-test-password",
+  "email": "contract-test@example.com",
+  "trainername": "contract-test-trainer",
+  "name": "Contract",
+  "secondname": "Test",
+  "lastnamep": "Paternal",
+  "lastnamem": "Maternal",
+  "age": "30",
+  "height": "180",
+  "weight": "75",
+  "membershiptype": "premium",
+  "startdate": "2024-01-01",
+  "startinscription": "2024-01-01",
+  "endinscription": "2025-01-01",
+  "price": 99.99
+}
