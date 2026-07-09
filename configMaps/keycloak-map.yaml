@@ -3,11 +3,7 @@ kind: ConfigMap
 metadata:
   name: keycloak-map
 data:
-
-  # Development Profile values (used when 'dev' profile is active)
-  spring.config.activate.on-profile: dev
-  server.url-dev: "http://192.168.213.112:31999"
-  realm.name-dev: "docker-real"
+  # Consumed directly via configMapKeyRef in each service's Deployment.
   MASTER-KEY: "master"
   USERNAME-KEY: "admin"
   ADMIN-CLI: "admin-cli"

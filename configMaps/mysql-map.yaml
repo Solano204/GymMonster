@@ -3,7 +3,5 @@ kind: ConfigMap
 metadata:
   name: mysql-map
 data:
-
-  # Development Profile Overrides
-  spring.config.activate.on-profile: dev
+  # Consumed directly via configMapKeyRef in phAdmin-dep.yaml.
   db-dev: "mscv_information"
