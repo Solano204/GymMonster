@@ -6,12 +6,12 @@ services:
     ports:
       - "3307:3306"  # External port 3307, internal port 3306
     environment:
-      MYSQL_ROOT_PASSWORD: 12345
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in .env}
       MYSQL_DATABASE: mscv_information
     networks:
       - app-network-containers
     volumes:
-      - "C:/Users/GAMER/Pictures/MICRO-PROJEC2/Storage Mysql:/var/lib/mysql"  # Bind mount
+      - mysql-data-pr2:/var/lib/mysql
     restart: always
 
   # Keycloak
@@ -29,14 +29,14 @@ services:
       DB_DATABASE: db_keycloak
       DB_PORT: 5433
       DB_USER: uncledave
-      DB_PASSWORD: Test123
+      DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?set KEYCLOAK_DB_PASSWORD in .env}
       KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?set KEYCLOAK_ADMIN_PASSWORD in .env}
       KC_HTTP_PORT: 8181
     networks:
       - app-network-containers
     volumes:
-      - "C:/Users/GAMER/Pictures/MICRO-PROJEC2/Storage Keycloak:/opt/keycloak/data"  # Bind mount
+      - keycloak-data-pr2:/opt/keycloak/data
     restart: always
 
   # PostgreSQL for Keycloak
@@ -47,7 +47,7 @@ services:
     environment:
       POSTGRES_DB: db_keycloak
       POSTGRES_USER: uncledave
-      POSTGRES_PASSWORD: Test123
+      POSTGRES_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?set KEYCLOAK_DB_PASSWORD in .env}
     ports:
       - "5433:5433"
     networks:
@@ -92,7 +92,7 @@ services:
     restart: always
     ports:
       - "6379:6379"
-    command: redis-server --loglevel warning --requirepass ***REMOVED-REDIS-PASSWORD***
+    command: redis-server --loglevel warning --requirepass ${REDIS_PASSWORD:?set REDIS_PASSWORD in .env}
     networks:
       - app-network-containers
     volumes:
@@ -175,3 +175,5 @@ networks:
 
 volumes:
   redis-data-pr2: {}  # Custom volume name
+  mysql-data-pr2: {}
+  keycloak-data-pr2: {}

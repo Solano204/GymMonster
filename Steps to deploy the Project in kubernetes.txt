@@ -33,7 +33,9 @@ docker push joshua76i/web-page-pr2:latest
 
 
 -- FOURTH DEPLOY THE CONFINGS AND THE SECRETS
-kubectl apply -f .\configMaps\keycloak-map.yaml 
+-- Before first use: copy .\Secrets\app_bd-secret.example.yaml to .\Secrets\app_bd-secret.yaml
+-- and fill in real values there. That file is gitignored and must never be committed.
+kubectl apply -f .\configMaps\keycloak-map.yaml
 kubectl apply -f .\configMaps\mysql-map.yaml 
 kubectl apply -f .\configMaps\bd-script.yaml 
 kubectl apply -f .\configMaps\email-map.yaml 
