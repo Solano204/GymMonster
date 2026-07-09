@@ -12,7 +12,6 @@ import infraestrucutre.Adapters.Drivens.DTOS.DtoDetailUserSent;
 import infraestrucutre.Adapters.Drivens.Entities.AllClient;
 import infraestrucutre.Adapters.Drivens.Entities.Client;
 import infraestrucutre.Adapters.Drivens.Entities.DetailUser;
-import infraestrucutre.Adapters.Drivens.ImpServices.ClientService;
 import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
 import java.util.*;
