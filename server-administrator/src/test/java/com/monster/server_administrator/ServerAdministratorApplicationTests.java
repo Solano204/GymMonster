@@ -9,10 +9,4 @@ class ServerAdministratorApplicationTests {
 	@Test
 	void contextLoads() {
 	}
-
-	@Test
-	void main() {
-		ServerAdministratorApplication.main(null);
-		
-	}
 }

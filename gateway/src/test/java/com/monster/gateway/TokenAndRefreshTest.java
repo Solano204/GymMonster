@@ -51,6 +51,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
+import org.springframework.core.io.buffer.DataBufferFactory;
+import org.springframework.core.io.buffer.DefaultDataBufferFactory;
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
 import org.springframework.mock.web.server.MockServerWebExchange;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
@@ -104,44 +106,54 @@ public class TokenAndRefreshTest {
 
 
     @BeforeEach
-    void setUp(TestInfo testInfo) throws Exception {
-    MockitoAnnotations.openMocks(this); // initialize mocks
-    if (testInfo.getDisplayName().equals("testAttemptRefreshToken_Success")) {
-        
-    // Mock the Keycloak URL and client credentials
-    ServicesUrl.Keycloak keycloak = mock(ServicesUrl.Keycloak.class);
-    when(keycloak.getUrl()).thenReturn("http://mock-keycloak-url.com");
-    when(keycloak.getClientId()).thenReturn("mock-client-id");
-    when(keycloak.getClientSecret()).thenReturn("mock-client-secret");
-    when(servicesUrl.getKeycloak()).thenReturn(keycloak);
-
-    // Mock WebClient behavior ONLY FOR POST REQUEST NOT OTHERS(GET,PUT,DELETE)
-    when(webClient.post()).thenReturn(requestBodyUriSpec); // It simulates starting a POST request, which would typically follow in the WebClient flow.
-    when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodyUriSpec);//This allows for method chaining, meaning after specifying the URI, the next call can continue the configuration (like setting headers or the body).
-    when(requestBodyUriSpec.contentType(MediaType.APPLICATION_FORM_URLENCODED)).thenReturn(requestBodyUriSpec);// This indicates that the request will be sent with the content type set to application/x-www-form-urlencoded, which is a common type for form submissions.
-    when(requestBodyUriSpec.body(any(BodyInserters.FormInserter.class))).thenReturn(requestHeadersSpec); // This specifies that when a body is set using the body, This prepares the request to include form data, and again supports method chaining to proceed to set headers.
-    when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);// What it does: It specifies that when the retrieve() method is called on the requestHeadersSpec, it should return the responseSpec mock. Purpose: This simulates the action of sending the HTTP request and preparing to handle the response.
-    when(responseSpec.onStatus(any(), any())).thenReturn(responseSpec);// What it does: This line specifies that when onStatus is called on the responseSpec, it should return the responseSpec mock again.  Purpose: This allows further chaining of calls to handle the response status, enabling you to simulate handling various HTTP response statuses.
-    when(responseSpec.bodyToMono(String.class)).thenReturn(Mono.just(
-        "{ \"access_token\": \"new-access-token\", \"refresh_token\": \"new-refresh-token\", \"expires_in\": 3600, \"refresh_expires_in\": 7200 }"
-    ));// What it does: This line sets up the response body to return a mocked Mono containing a JSON string when bodyToMono(String.class) is called on responseSpec.Purpose: This simulates a successful response from the HTTP request, returning a JSON representation of access and refresh tokens along with their expiration details.
-    when(objectMapper.readValue(anyString(), any(TypeReference.class)))
-            .thenReturn(Map.of(
-                    "access_token", "new-access-token",
-                    "refresh_token", "new-refresh-token",
-                    "expires_in", 3600,
-                    "refresh_expires_in", 7200
-            )); // What it does: This line specifies that when readValue is called on the objectMapper mock with any string and a TypeReference, it should return a predefined map containing the token data. Purpose: This simulates the behavior of parsing the JSON response into a Java Map, which your application code may use to access the tokens and expiration information.
+    void setUp() throws Exception {
+        MockitoAnnotations.openMocks(this); // initialize mocks
     }
 
-    if (testInfo.getDisplayName().equals("testValidateToken_Success")) {
-        when(jwtDecoder.decode("valid-token")).thenReturn(Mono.just(mock(Jwt.class)));
+    /**
+     * NOTE: this used to live in a @BeforeEach guarded by
+     * testInfo.getDisplayName().equals("testAttemptRefreshToken_Success") — JUnit 5's
+     * default display name is "testAttemptRefreshToken_Success()" (with parentheses),
+     * so that comparison never matched and this setup silently never ran for any test.
+     * Called explicitly now by the tests that need it.
+     */
+    private void mockKeycloakConfig() {
+        ServicesUrl.Keycloak keycloak = mock(ServicesUrl.Keycloak.class);
+        when(keycloak.getUrl()).thenReturn("http://mock-keycloak-url.com");
+        when(keycloak.getClientId()).thenReturn("mock-client-id");
+        when(keycloak.getClientSecret()).thenReturn("mock-client-secret");
+        when(servicesUrl.getKeycloak()).thenReturn(keycloak);
     }
-}
+
+    private void mockSuccessfulKeycloakRefresh() {
+        when(webClient.post()).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.contentType(MediaType.APPLICATION_FORM_URLENCODED)).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.body(any(BodyInserters.FormInserter.class))).thenReturn(requestHeadersSpec);
+        when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.onStatus(any(), any())).thenReturn(responseSpec);
+        when(responseSpec.bodyToMono(String.class)).thenReturn(Mono.just(
+            "{ \"access_token\": \"new-access-token\", \"refresh_token\": \"new-refresh-token\", \"expires_in\": 3600, \"refresh_expires_in\": 7200 }"
+        ));
+        try {
+            when(objectMapper.readValue(anyString(), any(TypeReference.class)))
+                    .thenReturn(Map.of(
+                            "access_token", "new-access-token",
+                            "refresh_token", "new-refresh-token",
+                            "expires_in", 3600,
+                            "refresh_expires_in", 7200
+                    ));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
 
     @Test
     void testAttemptRefreshToken_Success() {
+        mockKeycloakConfig();
+        mockSuccessfulKeycloakRefresh();
+
         // Set up the request and exchange with headers
         HttpHeaders headers = new HttpHeaders();
         headers.add("refresh_token", refreshToken);
@@ -230,10 +242,16 @@ void testCacheNewTokens_Success() {
 
 
 @Test
-void testHandleError() {
+void testHandleError() throws JsonProcessingException {
     ServerWebExchange exchange = mock(ServerWebExchange.class);
     ServerHttpResponse response = mock(ServerHttpResponse.class);
+    DataBufferFactory bufferFactory = new DefaultDataBufferFactory();
+
     when(exchange.getResponse()).thenReturn(response);
+    when(response.getHeaders()).thenReturn(new HttpHeaders());
+    when(response.bufferFactory()).thenReturn(bufferFactory);
+    when(response.writeWith(any())).thenReturn(Mono.empty());
+    when(objectMapper.writeValueAsBytes(any())).thenReturn("{}".getBytes());
 
     Mono<Void> result = filter.handleError(exchange, "Unauthorized", HttpStatus.UNAUTHORIZED);
 
@@ -244,7 +262,8 @@ void testHandleError() {
 
 @Test
 void testAttemptRefreshToken_WebClientPostRequestFails() {
-    
+    mockKeycloakConfig();
+
     ServerWebExchange exchange = mock(ServerWebExchange.class);
     ServerHttpRequest request = mock(ServerHttpRequest.class);
     HttpHeaders headers = new HttpHeaders();
@@ -264,6 +283,7 @@ void testAttemptRefreshToken_WebClientPostRequestFails() {
     when(requestBodyUriSpec.contentType(MediaType.APPLICATION_FORM_URLENCODED)).thenReturn(requestBodyUriSpec);
     when(requestBodyUriSpec.body(any(BodyInserters.FormInserter.class))).thenReturn(requestHeadersSpec);
     when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+    when(responseSpec.onStatus(any(), any())).thenReturn(responseSpec);
     when(responseSpec.bodyToMono(String.class)).thenReturn(Mono.error(new RuntimeException("Simulated Keycloak failure")));
 
     StepVerifier.create(filter.attemptRefreshToken(exchange))
