@@ -68,7 +68,7 @@ spec:
   type: LoadBalancer
   ports:
     - protocol: TCP
-      port: 8093         
-      targetPort: 8903 
+      port: 8903
+      targetPort: 8903
   selector:
     app: web-page

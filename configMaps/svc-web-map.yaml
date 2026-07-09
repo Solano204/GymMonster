@@ -9,7 +9,7 @@ data:
   curr.name.test: "dev"  # Value for the dev profile
   info-server-dev: "server-information"
   info-server-uri-dev: "lb://server-information"
-  info-server-port-dev: "8903"
+  info-server-port-dev: "8111"
   server.port-dev: "8903"
   redis_host-dev: "redis"
   redis_port-dev: "6379"

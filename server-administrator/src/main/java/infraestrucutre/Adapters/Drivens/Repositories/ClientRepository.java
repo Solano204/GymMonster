@@ -82,11 +82,8 @@ public Mono<String> updateClient(String username, DtoDetailUserSent client) {
 public Mono<String> changePassword(String username, String oldPassword, String newPassword) {
     return webClientBuilder.build()
             .put()
-            .uri(uriBuilder -> uriBuilder
-                    .scheme("http")
-                    .host(servicesUrl.getInfo().getUrl()) // Use dynamic URL
-                    .path("/api/clients/{username}/{oldPassword}/{newPassword}/changePassword")
-                    .build(username, oldPassword, newPassword))
+            .uri(servicesUrl.getInfo().getUrl() + "/api/clients/{username}/{oldPassword}/{newPassword}/changePassword",
+                    username, oldPassword, newPassword)
             .accept(MediaType.APPLICATION_JSON)
             .retrieve()
             .bodyToMono(String.class);
@@ -97,11 +94,7 @@ public Mono<String> changePassword(String username, String oldPassword, String n
 public Mono<String> changeEmail(String username, String email) {
     return webClientBuilder.build()
             .put()
-            .uri(uriBuilder -> uriBuilder
-                    .scheme("http")
-                    .host(servicesUrl.getInfo().getUrl()) // Use dynamic URL
-                    .path("/api/clients/{username}/{email}/changeEmail")
-                    .build(username, email))
+            .uri(servicesUrl.getInfo().getUrl() + "/api/clients/{username}/{email}/changeEmail", username, email)
             .accept(MediaType.APPLICATION_JSON)
             .retrieve()
             .bodyToMono(String.class);
@@ -112,11 +105,7 @@ public Mono<String> changeEmail(String username, String email) {
 public Mono<String> changeUsername(String username, String newUsername) {
     return webClientBuilder.build()
             .put()
-            .uri(uriBuilder -> uriBuilder
-                    .scheme("http")
-                    .host(servicesUrl.getInfo().getUrl()) // Use dynamic URL
-                    .path("/api/clients/{username}/{newUsername}/changeUsername")
-                    .build(username, newUsername))
+            .uri(servicesUrl.getInfo().getUrl() + "/api/clients/{username}/{newUsername}/changeUsername", username, newUsername)
             .accept(MediaType.APPLICATION_JSON)
             .retrieve()
             .bodyToMono(String.class);
@@ -127,11 +116,7 @@ public Mono<String> changeUsername(String username, String newUsername) {
 public Mono<String> changeMembership(String username, String membershipType) {
     return webClientBuilder.build()
             .put()
-            .uri(uriBuilder -> uriBuilder
-                    .scheme("http")
-                    .host(servicesUrl.getInfo().getUrl()) // Use dynamic URL
-                    .path("/api/clients/{username}/{membershipType}/assignMembership")
-                    .build(username, membershipType))
+            .uri(servicesUrl.getInfo().getUrl() + "/api/clients/{username}/{membershipType}/assignMembership", username, membershipType)
             .accept(MediaType.APPLICATION_JSON)
             .retrieve()
             .bodyToMono(String.class);
@@ -142,11 +127,7 @@ public Mono<String> changeMembership(String username, String membershipType) {
 public Mono<String> unassignMembership(String username, String membershipType) {
     return webClientBuilder.build()
             .delete()
-            .uri(uriBuilder -> uriBuilder
-                    .scheme("http")
-                    .host(servicesUrl.getInfo().getUrl()) // Use dynamic URL
-                    .path("/api/clients/{username}/{membershipType}/dessignMembership")
-                    .build(username, membershipType))
+            .uri(servicesUrl.getInfo().getUrl() + "/api/clients/{username}/{membershipType}/dessignMembership", username, membershipType)
             .accept(MediaType.APPLICATION_JSON)
             .retrieve()
             .bodyToMono(String.class);
@@ -157,11 +138,7 @@ public Mono<String> unassignMembership(String username, String membershipType) {
 public Mono<String> changeTrainer(String username, String usernameTrainer) {
     return webClientBuilder.build()
             .put()
-            .uri(uriBuilder -> uriBuilder
-                    .scheme("http")
-                    .host(servicesUrl.getInfo().getUrl()) // Use dynamic URL
-                    .path("/api/clients/{username}/{usernameTrainer}/assignTrainer")
-                    .build(username, usernameTrainer))
+            .uri(servicesUrl.getInfo().getUrl() + "/api/clients/{username}/{usernameTrainer}/assignTrainer", username, usernameTrainer)
             .accept(MediaType.APPLICATION_JSON)
             .retrieve()
             .bodyToMono(String.class);
@@ -172,11 +149,7 @@ public Mono<String> changeTrainer(String username, String usernameTrainer) {
 public Mono<String> unassignTrainer(String username, String usernameTrainer) {
     return webClientBuilder.build()
             .delete()
-            .uri(uriBuilder -> uriBuilder
-                    .scheme("http")
-                    .host(servicesUrl.getInfo().getUrl()) // Use dynamic URL
-                    .path("/api/clients/{username}/{usernameTrainer}/dessignTrainer")
-                    .build(username, usernameTrainer))
+            .uri(servicesUrl.getInfo().getUrl() + "/api/clients/{username}/{usernameTrainer}/dessignTrainer", username, usernameTrainer)
             .accept(MediaType.APPLICATION_JSON)
             .retrieve()
             .bodyToMono(String.class);
@@ -221,11 +194,7 @@ public Mono<Boolean> validateIfEmailExistsClient(String email) {
 public Mono<String> deleteClient(String username, String password) {
     return webClientBuilder.build()
             .delete()
-            .uri(uriBuilder -> uriBuilder
-                    .scheme("http")
-                    .host(servicesUrl.getInfo().getUrl()) // Use dynamic URL
-                    .path("/api/clients/{username}/{password}/deleteAccount")
-                    .build(username, password))
+            .uri(servicesUrl.getInfo().getUrl() + "/api/clients/{username}/{password}/deleteAccount", username, password)
             .accept(MediaType.APPLICATION_JSON)
             .retrieve()
             .bodyToMono(String.class);

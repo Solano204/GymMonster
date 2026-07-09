@@ -52,14 +52,7 @@ public class WorkTrainerRepository implements WorkTrainerRepositoryInterface {
                        public Flux<DtoTrainerData> getAllTrainers(int page, int size) {
                            return webClientBuilder.build()
                                    .get()
-                                   .uri(uriBuilder -> uriBuilder
-                                           .scheme("http")
-                                           .host("localhost")
-                                           .port(8111)
-                                           .path("/trainers/allInformation")
-                                           .queryParam("page", page)
-                                           .queryParam("size", size)
-                                           .build())
+                                   .uri(servicesUrl.getInfo().getUrl() + "/trainers/allInformation?page={page}&size={size}", page, size)
                                    .accept(MediaType.APPLICATION_JSON)
                                    .retrieve()
                                    .bodyToFlux(DtoTrainerData.class);

@@ -182,7 +182,7 @@ public class ClientHandler {
     // Handler to change trainer
     public Mono<ServerResponse> changeTrainer(ServerRequest request) {
         String username = request.pathVariable("username");
-        String usernameTrainer = request.pathVariable("");
+        String usernameTrainer = request.pathVariable("usernameTrainer");
 
         return errorHandler(
                 clientService.changeTrainer(username, usernameTrainer)
