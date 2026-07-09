@@ -20,7 +20,7 @@ services:
     networks:
       - networking-test
     volumes:
-      - "C:/Users/GAMER/Pictures/MICRO-PROJEC2/Storage Keycloak:/opt/keycloak/data"
+      - keycloak-data-test:/opt/keycloak/data
     restart: on-failure
 
   # Config Server
@@ -51,5 +51,5 @@ networks:
     driver: bridge
 
 volumes:
-  vmTestSql: {}    # Named volume for MySQL
   redis-data-test: {}  # Named volume for Redis
+  keycloak-data-test: {}  # Named volume for Keycloak
