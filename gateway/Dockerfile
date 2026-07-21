@@ -28,8 +28,14 @@ FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 
+# eclipse-temurin runs as root by default - was never given a non-root user.
+RUN groupadd --system spring && useradd --system --gid spring spring
+
 # Copy and rename the JAR file from the builder stage
 COPY --from=builder /app/apigateway-service/target/gateway-0.0.1-SNAPSHOT.jar /app/app-apigateway.jar
+RUN chown spring:spring /app/app-apigateway.jar
+
+USER spring
 
 # Expose the port for the API Gateway
 EXPOSE 8081

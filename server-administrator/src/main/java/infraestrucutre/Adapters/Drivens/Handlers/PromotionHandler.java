@@ -28,10 +28,10 @@ public class PromotionHandler {
 
     // Get all current promotions
     public Mono<ServerResponse> getAllPromotions(ServerRequest request) {
-        return errorHandler(
-                ServerResponse.ok()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(promotionService.getAllPromotions(), Promotion.class));
+        return promotionService.getAllPromotions()
+                .collectList()
+                .flatMap(list -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(list))
+                .onErrorResume(this::errorHandler);
     }
 
     public Mono<ServerResponse> getAllCurrentPromotions(ServerRequest request) {
@@ -39,10 +39,10 @@ public class PromotionHandler {
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         LocalDate parsedDate = LocalDate.parse(currentDate, formatter);
-        return errorHandler(
-                ServerResponse.ok()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(promotionService.getPromotionsByCurrentDate(parsedDate), Promotion.class));
+        return promotionService.getPromotionsByCurrentDate(parsedDate)
+                .collectList()
+                .flatMap(list -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(list))
+                .onErrorResume(this::errorHandler);
     }
 
     // Get all promotions by date
@@ -50,20 +50,20 @@ public class PromotionHandler {
         String date = request.pathVariable("date");
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         LocalDate parsedDate = LocalDate.parse(date, formatter);
-        return errorHandler(
-                ServerResponse.ok()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(promotionService.getPromotionsByStartDate(parsedDate), Promotion.class));
+        return promotionService.getPromotionsByStartDate(parsedDate)
+                .collectList()
+                .flatMap(list -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(list))
+                .onErrorResume(this::errorHandler);
     }
 
     public Mono<ServerResponse> getAllPromotionsByEndDate(ServerRequest request) {
         String date = request.pathVariable("date");
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         LocalDate parsedDate = LocalDate.parse(date, formatter);
-        return errorHandler(
-                ServerResponse.ok()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(promotionService.getPromotionsByEndDate(parsedDate), Promotion.class));
+        return promotionService.getPromotionsByEndDate(parsedDate)
+                .collectList()
+                .flatMap(list -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(list))
+                .onErrorResume(this::errorHandler);
     }
 
      public Mono<ServerResponse> createPromotion(ServerRequest request) {
@@ -88,23 +88,21 @@ public class PromotionHandler {
     }
 
     // Error handler method
-    private Mono<ServerResponse> errorHandler(Mono<ServerResponse> response) {
-        return response.onErrorResume(error -> {
-            if (error instanceof WebClientResponseException errorResponse) {
-                if (errorResponse.getStatusCode() == HttpStatus.NOT_FOUND) {
-                    Map<String, Object> body = new HashMap<>();
-                    body.put("error", "Promotions not found: " + errorResponse.getMessage());
-                    body.put("timestamp", new Date());
-                    body.put("status", errorResponse.getStatusCode().value());
-                    return ServerResponse.status(HttpStatus.NOT_FOUND).bodyValue(body);
-                }
-                return ServerResponse.status(errorResponse.getStatusCode())
-                        .bodyValue(errorResponse.getResponseBodyAsString());
+    private Mono<ServerResponse> errorHandler(Throwable error) {
+        if (error instanceof WebClientResponseException errorResponse) {
+            if (errorResponse.getStatusCode() == HttpStatus.NOT_FOUND) {
+                Map<String, Object> body = new HashMap<>();
+                body.put("error", "Promotions not found: " + errorResponse.getMessage());
+                body.put("timestamp", new Date());
+                body.put("status", errorResponse.getStatusCode().value());
+                return ServerResponse.status(HttpStatus.NOT_FOUND).bodyValue(body);
             }
-            Map<String, Object> body = new HashMap<>();
-            body.put("error", "An unexpected error occurred");
-            body.put("timestamp", new Date());
-            return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).bodyValue(body);
-        });
+            return ServerResponse.status(errorResponse.getStatusCode())
+                    .bodyValue(errorResponse.getResponseBodyAsString());
+        }
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", "An unexpected error occurred");
+        body.put("timestamp", new Date());
+        return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).bodyValue(body);
     }
 }

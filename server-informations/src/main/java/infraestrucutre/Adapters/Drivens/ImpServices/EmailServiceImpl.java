@@ -49,6 +49,14 @@ public Mono<Boolean> sendEmail(String[] email, String username, String password)
 public Mono<Boolean> sendEmailWithFile(String[] toUser, String subject, String message, File file) {
     return Mono.fromRunnable(() -> {
         try {
+            // MimeMessageHelper.addAttachment only wraps the File reference - it doesn't read
+            // it - so a missing file silently passes here and only fails later, lazily, whenever
+            // the underlying transport actually reads the attachment bytes. Check eagerly so a
+            // missing attachment always fails this call, regardless of transport behavior.
+            if (!file.exists() || !file.isFile()) {
+                throw new RuntimeException("Attachment file does not exist: " + file.getPath());
+            }
+
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, true, StandardCharsets.UTF_8.name());
 

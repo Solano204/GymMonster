@@ -51,15 +51,33 @@ public class RegisterService implements ClientServiceInterface {
     private final FillinKeycloakUser fillinKeycloakUser;
     private final IEmailService emailService;
 
+    // Was .subscribe()-ing the reactive chain and returning void immediately -
+    // ConcurrentKafkaListenerContainerFactory (the imperative, non-reactive
+    // container configured here) commits the Kafka offset as soon as this
+    // method returns, not when the subscribed pipeline actually finishes.
+    // subscribe() kicks the chain off asynchronously and returns instantly,
+    // so the offset was being committed before the client record, Keycloak
+    // user, and confirmation email were actually created - a crash or slow
+    // downstream call between "method returns" and "chain finishes" silently
+    // lost the registration with no redelivery, since Kafka already
+    // considered it processed.
+    //
+    // .block() makes the listener wait for the real outcome before
+    // returning, so the offset only commits after the work is actually
+    // done. createClient() also used to swallow every failure into an
+    // errores list that only got printed to stdout - a failed Keycloak
+    // provisioning or DB write looked identical to a success from Kafka's
+    // perspective. Throwing here when errores is non-empty lets the
+    // container's error handler (bounded retry, see KafkaConsumerConfig)
+    // actually engage instead of the offset advancing over a failed
+    // registration.
     @KafkaListener(topics = "flow", containerFactory = "kafkaListenerContainerFactory", groupId = "grupo1")
     public void consumer(AllClient newClient) {
         System.out.println("Received Client created event "+ newClient.age());
-        createClient(newClient).flatMap(response -> {
-            for (String error : response) {
-                System.out.println(error);
-            }
-            return Mono.just(response);
-        }).subscribe();
+        List<String> errores = createClient(newClient).block();
+        if (errores != null && !errores.isEmpty()) {
+            throw new IllegalStateException("Client registration failed: " + String.join("; ", errores));
+        }
     }
 
       @Override

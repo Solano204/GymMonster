@@ -34,15 +34,24 @@ jobs:
           java-version: "21"
           cache: maven
 
-      # Known gap: server-informations' ClientRepositoryTest/KeycloakServiceImplIntegrationTest
-      # expect a manually-started docker-compose-test-inf.yaml stack (real MySQL/Keycloak on
-      # fixed ports), not auto-managed Testcontainers, and web-page's contextLoads needs a
-      # reachable Redis - neither is started here, so those specific tests are expected to fail
-      # in this job until that test infrastructure is wired up (tracked separately, not a CI
-      # config problem). Every other test in this repo is self-contained and should pass.
+      # server-informations' ServerInformationsApplicationTests/ClientRepositoryTest/
+      # KeycloakServiceImplIntegrationTest and web-page's WebPageApplicationTests need a
+      # manually-started docker-compose-test-inf.yaml stack (real MySQL/Keycloak on fixed
+      # ports, with seed data + a realm import this repo doesn't provide yet) rather than
+      # auto-managed Testcontainers - not something this job can stand up. They used to be
+      # included in this same `mvn verify`, which made the whole matrix leg fail and, because
+      # build-and-push `needs: test`, silently skipped rebuilding+republishing the Docker image
+      # for these 2 services on every push to main. Excluded from the gating run below so a
+      # real regression in either service still blocks its deploy, but the deploy itself isn't
+      # blocked by tests that were never going to pass without that infra. Run them yourself
+      # locally with `docker compose -f docker-compose-test-inf.yaml up -d` first once the
+      # seed data/realm import exist.
       - name: mvn verify
         working-directory: ${{ matrix.service }}
-        run: ./mvnw -B -ntp verify
+        run: >
+          ./mvnw -B -ntp verify
+          ${{ matrix.service == 'server-informations' && '-Dtest=!ServerInformationsApplicationTests,!ClientRepositoryTest,!KeycloakServiceImplIntegrationTest' || '' }}
+          ${{ matrix.service == 'web-page' && '-Dtest=!WebPageApplicationTests' || '' }}
 
       - name: Upload surefire reports
         if: always()

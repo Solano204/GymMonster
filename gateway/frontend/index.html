@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GYM_MOSTER — Explorador de endpoints</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="page-header">
+    <h1>Explorador de endpoints — GYM_MOSTER</h1>
+    <p>Interfaz simple (sin frameworks) para los 104 endpoints reales del gateway: <code>/api/admin/**</code> (server-administrator) y <code>/api/page/**</code> (web-page). <code>server-informations</code> y <code>server-register</code> no tienen ruta en el gateway y no se llaman directamente.</p>
+    <p class="hint">Todo se llama a través del gateway (un solo puerto). El despliegue real es Kubernetes (sin docker-compose) — apuntá la URL de abajo a donde tengas el gateway corriendo (port-forward, minikube, etc.).</p>
+  </header>
+
+  <section class="card">
+    <h2>Configuración</h2>
+    <div class="field-row">
+      <label for="baseUrl">URL del gateway</label>
+      <input id="baseUrl" type="text" />
+    </div>
+    <div class="field-row-actions">
+      <button id="saveConfigBtn" type="button">Guardar configuración</button>
+      <span id="configSavedMsg" class="saved-msg"></span>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Sesión <span id="sessionBadge" class="badge badge--off">Sin sesión</span></h2>
+    <form id="loginForm">
+      <p class="panel-desc"><code>POST /GymMonster/auth/login</code> (username/password como headers, no body)</p>
+      <label>Usuario <input name="username" required /></label>
+      <label>Contraseña <input name="password" type="password" required /></label>
+      <button type="submit">Iniciar sesión</button>
+    </form>
+    <div class="result" data-result="login"></div>
+    <div class="field-row-actions">
+      <button id="logoutBtn" type="button">Cerrar sesión</button>
+    </div>
+    <div class="result" data-result="logout"></div>
+    <p class="hint">El access/refresh token nunca se guarda (ni localStorage ni sessionStorage) — solo vive en memoria mientras esta pestaña siga abierta. Se adjunta automáticamente como <code>Authorization: Bearer</code> en cada llamada del explorador de abajo.</p>
+  </section>
+
+  <section class="card">
+    <h2>Explorador de endpoints</h2>
+    <input id="endpointSearch" type="text" placeholder="Buscar por método, ruta o grupo (ej: clients, promotions, DELETE)..." />
+    <div id="endpointGroups" class="endpoint-groups"></div>
+
+    <div class="selected-panel">
+      <h3>Endpoint seleccionado</h3>
+      <div id="endpointFormContainer"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Última petición / respuesta</h2>
+    <div class="inspector-grid">
+      <div>
+        <h3>Request</h3>
+        <pre id="lastRequest">—</pre>
+      </div>
+      <div>
+        <h3>Response</h3>
+        <pre id="lastResponse">—</pre>
+      </div>
+    </div>
+  </section>
+
+  <script type="module" src="dist/app.js"></script>
+</body>
+</html>

@@ -26,8 +26,8 @@ public interface ClassTrainerRepository extends ReactiveCrudRepository<ClassTrai
     // Find ClassTrainers by a specific Specialty
     @Query("""
             SELECT s.* FROM specialty s
-            JOIN pertrainer_specialty ps ON s.id = ps.specialty_id
-            WHERE ps.pertrainer_id = :trainerId""")
+            JOIN trainer_class_specialty ps ON s.id = ps.specialty_id
+            WHERE ps.trainer_class_id = :trainerId""")
     Flux<Specialty> findAllSpecialty(@Param("trainerId") Long trainerId);
 
     // Custom query to fetch all work classes associated with a specific trainer

@@ -35,14 +35,25 @@ import lombok.Data;
       ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, 
       StringSerializer.class);
       configProps.put(
-        ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, 
+        ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
         JsonSerializer.class);
+        // Explicit rather than relying on the client library's default (acks=all +
+        // idempotence on by default since Kafka 3.0, off before that) - makes the
+        // guarantee visible here regardless of which kafka-clients version is resolved.
+        configProps.put(ProducerConfig.ACKS_CONFIG, "all");
+        configProps.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
         return new DefaultKafkaProducerFactory<>(configProps);
       }
       
       @Bean
       public KafkaTemplate<String, AllClient> kafkaTemplate() {
-        return new KafkaTemplate<>(producerFactory());
+        // Hand-built ProducerFactory, so Spring Boot's Kafka tracing
+        // auto-instrumentation never sees it - has to be switched on
+        // explicitly (Doc 8). Once enabled, Spring Kafka picks up the
+        // ObservationRegistry bean from the context automatically.
+        KafkaTemplate<String, AllClient> template = new KafkaTemplate<>(producerFactory());
+        template.setObservationEnabled(true);
+        return template;
       }
     }
     

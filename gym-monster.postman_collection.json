@@ -1,0 +1,287 @@
+{
+  "info": {
+    "name": "gym-monster",
+    "description": "Covers the core registration flow (web-page) and representative CRUD across server-administrator/server-informations. Not every one of the ~80 endpoints across all 5 services is included - this is the backbone flow plus one example per pattern (create/read/update/delete/password-change), enough to copy-paste and extend. Run 'Get access token' first (needs a real user in the docker-real Keycloak realm) - every other request inherits the bearer token from it automatically. All password/delete-account endpoints below use the post-Doc-1-fix JSON-body shape, not the old path-segment one.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "keycloak_url", "value": "http://localhost:8181" },
+    { "key": "keycloak_realm", "value": "docker-real" },
+    { "key": "keycloak_client_id", "value": "Docker-Gym", "description": "See gateway's application.properties svc.keycloak.client-id" },
+    { "key": "keycloak_client_secret", "value": "", "description": "Leave blank if Docker-Gym is a public client" },
+    { "key": "username", "value": "" },
+    { "key": "password", "value": "" },
+    { "key": "accessToken", "value": "" },
+    { "key": "gateway_url", "value": "http://localhost:8081" },
+    { "key": "web_page_url", "value": "http://localhost:8903" },
+    { "key": "admin_url", "value": "http://localhost:8900" },
+    { "key": "info_url", "value": "http://localhost:8111" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Auth (Keycloak)",
+      "item": [
+        {
+          "name": "Get access token",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "grant_type", "value": "password" },
+                { "key": "client_id", "value": "{{keycloak_client_id}}" },
+                { "key": "client_secret", "value": "{{keycloak_client_secret}}" },
+                { "key": "username", "value": "{{username}}" },
+                { "key": "password", "value": "{{password}}" }
+              ]
+            },
+            "url": {
+              "raw": "{{keycloak_url}}/realms/{{keycloak_realm}}/protocol/openid-connect/token",
+              "host": ["{{keycloak_url}}"],
+              "path": ["realms", "{{keycloak_realm}}", "protocol", "openid-connect", "token"]
+            },
+            "description": "Resource Owner Password Credentials grant, for local testing - needs a real user already provisioned in the docker-real realm (e.g. one created via the registration flow below)."
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "const json = pm.response.json();",
+              "if (json.access_token) {",
+              "    pm.collectionVariables.set('accessToken', json.access_token);",
+              "}"
+            ] }
+          }]
+        }
+      ]
+    },
+    {
+      "name": "web-page (public-facing)",
+      "item": [
+        {
+          "name": "Register client",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"jdoe\",\n  \"password\": \"Str0ngPassword!\",\n  \"email\": \"jdoe@example.com\",\n  \"trainername\": \"trainer1\",\n  \"name\": \"John\",\n  \"secondname\": \"Michael\",\n  \"lastnamem\": \"Doe\",\n  \"lastnamep\": \"Smith\",\n  \"age\": \"30\",\n  \"weight\": \"80\",\n  \"height\": \"180\",\n  \"membershiptype\": \"premium\",\n  \"startdate\": \"2026-01-01\",\n  \"startinscription\": \"2026-01-01\",\n  \"endinscription\": \"2027-01-01\",\n  \"price\": 50.0\n}"
+            },
+            "url": {
+              "raw": "{{web_page_url}}/api/page/registerClient",
+              "host": ["{{web_page_url}}"], "path": ["api", "page", "registerClient"]
+            },
+            "description": "Publishes to Kafka's 'flow' topic; server-register consumes it asynchronously (validate -> persist -> provision Keycloak user -> send confirmation email, see Kafka notes). This response is immediate and doesn't wait for that to finish - poll 'Get client info' after a few seconds to confirm."
+          }
+        },
+        {
+          "name": "Get client info",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{web_page_url}}/api/page/clients/{{username}}/allInformation",
+              "host": ["{{web_page_url}}"], "path": ["api", "page", "clients", "{{username}}", "allInformation"]
+            }
+          }
+        },
+        {
+          "name": "Change password",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"oldPassword\": \"Str0ngPassword!\",\n  \"newPassword\": \"EvenStr0ngerPassword!\"\n}"
+            },
+            "url": {
+              "raw": "{{web_page_url}}/api/page/clients/{{username}}/changePassword",
+              "host": ["{{web_page_url}}"], "path": ["api", "page", "clients", "{{username}}", "changePassword"]
+            },
+            "description": "JSON body, not path segments - already fixed in this codebase (see RouterRegisterTest, the reference pattern Doc 1's other fixes copied)."
+          }
+        },
+        {
+          "name": "Delete account",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"Str0ngPassword!\"\n}"
+            },
+            "url": {
+              "raw": "{{web_page_url}}/api/page/clients/{{username}}/deleteAccount",
+              "host": ["{{web_page_url}}"], "path": ["api", "page", "clients", "{{username}}", "deleteAccount"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "server-administrator (back-office CRUD)",
+      "item": [
+        {
+          "name": "Get all clients",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{admin_url}}/api/admin/clients", "host": ["{{admin_url}}"], "path": ["api", "admin", "clients"] }
+          }
+        },
+        {
+          "name": "Create client",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin-created-client\",\n  \"password\": \"Str0ngPassword!\",\n  \"email\": \"created-by-admin@example.com\",\n  \"membershiptype\": \"standard\",\n  \"trainername\": \"trainer1\"\n}"
+            },
+            "url": { "raw": "{{admin_url}}/api/admin/clients", "host": ["{{admin_url}}"], "path": ["api", "admin", "clients"] }
+          }
+        },
+        {
+          "name": "Change client password (admin)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"oldPassword\": \"Str0ngPassword!\",\n  \"newPassword\": \"EvenStr0ngerPassword!\"\n}"
+            },
+            "url": {
+              "raw": "{{admin_url}}/api/admin/clients/{{username}}/change-password",
+              "host": ["{{admin_url}}"], "path": ["api", "admin", "clients", "{{username}}", "change-password"]
+            },
+            "description": "JSON body, not path segments - fixed in this pass (Doc 1). Was also a confirmed crash bug before this fix (deleteClient below had the same class of issue)."
+          }
+        },
+        {
+          "name": "Delete client",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"password\": \"Str0ngPassword!\"\n}" },
+            "url": {
+              "raw": "{{admin_url}}/api/admin/clients/{{username}}/deleteAccount",
+              "host": ["{{admin_url}}"], "path": ["api", "admin", "clients", "{{username}}", "deleteAccount"]
+            },
+            "description": "Fixed in this pass: used to read a 'password' path variable the route never declared, throwing IllegalArgumentException on every call. Now reads it from this JSON body instead."
+          }
+        },
+        {
+          "name": "Get all trainers",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{admin_url}}/api/admin/classTrainers/all", "host": ["{{admin_url}}"], "path": ["api", "admin", "classTrainers", "all"] }
+          }
+        },
+        {
+          "name": "Change trainer password",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"oldPassword\": \"Str0ngPassword!\",\n  \"newPassword\": \"EvenStr0ngerPassword!\"\n}" },
+            "url": {
+              "raw": "{{admin_url}}/api/admin/classTrainers/{{username}}/password",
+              "host": ["{{admin_url}}"], "path": ["api", "admin", "classTrainers", "{{username}}", "password"]
+            },
+            "description": "JSON body, not path segments - fixed in this pass (Doc 1)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "server-informations (read-facing)",
+      "item": [
+        {
+          "name": "Get all clients (admin view, paginated)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{info_url}}/api/clients/AD/allClients?page=0&size=10",
+              "host": ["{{info_url}}"], "path": ["api", "clients", "AD", "allClients"],
+              "query": [{ "key": "page", "value": "0" }, { "key": "size", "value": "10" }]
+            }
+          }
+        },
+        {
+          "name": "Change client password",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"oldPassword\": \"Str0ngPassword!\",\n  \"newPassword\": \"EvenStr0ngerPassword!\"\n}" },
+            "url": {
+              "raw": "{{info_url}}/api/clients/{{username}}/changePassword",
+              "host": ["{{info_url}}"], "path": ["api", "clients", "{{username}}", "changePassword"]
+            },
+            "description": "JSON body, not path segments - fixed in this pass (Doc 1)."
+          }
+        },
+        {
+          "name": "Change client username",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"newUsername\": \"jdoe2\",\n  \"password\": \"Str0ngPassword!\"\n}" },
+            "url": {
+              "raw": "{{info_url}}/api/clients/{{username}}/changeUsername",
+              "host": ["{{info_url}}"], "path": ["api", "clients", "{{username}}", "changeUsername"]
+            },
+            "description": "JSON body, not path segments - fixed in this pass (Doc 1)."
+          }
+        },
+        {
+          "name": "Delete client",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"password\": \"Str0ngPassword!\"\n}" },
+            "url": {
+              "raw": "{{info_url}}/api/clients/{{username}}/deleteAccount",
+              "host": ["{{info_url}}"], "path": ["api", "clients", "{{username}}", "deleteAccount"]
+            }
+          }
+        },
+        {
+          "name": "Get all pretrainers info",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{info_url}}/api/pertrainers/allInformation", "host": ["{{info_url}}"], "path": ["api", "pertrainers", "allInformation"] }
+          }
+        },
+        {
+          "name": "Update pretrainer password",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"oldPassword\": \"Str0ngPassword!\",\n  \"newPassword\": \"EvenStr0ngerPassword!\"\n}" },
+            "url": {
+              "raw": "{{info_url}}/api/pertrainers/AD/{{username}}/updatePassword",
+              "host": ["{{info_url}}"], "path": ["api", "pertrainers", "AD", "{{username}}", "updatePassword"]
+            },
+            "description": "JSON body, not path segments - fixed in this pass (Doc 1). The route this used to also (incorrectly) map to - PUT /api/pertrainers/AD/{username}/{password} - was dead/broken and removed."
+          }
+        }
+      ]
+    },
+    {
+      "name": "gateway (routes to all of the above)",
+      "item": [
+        {
+          "name": "Example: get all clients, via gateway",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{gateway_url}}/api/admin/clients", "host": ["{{gateway_url}}"], "path": ["api", "admin", "clients"] },
+            "description": "Same request as 'server-administrator > Get all clients', routed through the gateway (port 8081) instead of hitting server-administrator directly. RedisTokenValidationFilter checks the session token against Redis before proxying - see Resilience notes for the timeout now in place on that hop."
+          }
+        }
+      ]
+    }
+  ]
+}

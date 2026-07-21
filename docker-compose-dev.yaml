@@ -1,3 +1,44 @@
+# Doc 2 hardening notes:
+# - Secrets and restart policies were already handled well before this pass
+#   (.env gitignored with a .env.example template, ${VAR:?required} guards -
+#   not touched here).
+# - Real bug found and fixed: db-keycloak published "5433:5433" and Keycloak's
+#   own DB_PORT was set to 5433, but nothing told the Postgres container to
+#   actually listen on 5433 - the official postgres image defaults to 5432
+#   internally. Since Keycloak talks to db-keycloak over the docker network
+#   (not through the published host port), it would have been trying to
+#   reach a port nothing was listening on. Added `command: ["-p", "5433"]` to
+#   make the container's actual listening port match what everything else
+#   here already assumed.
+# - Added healthchecks + `condition: service_healthy` throughout - nothing had
+#   a healthcheck before, so `depends_on` only ever waited for the container
+#   to start, not for MySQL/Keycloak/Kafka/etc. to actually be ready.
+# - Split the single flat network into `data-network` (MySQL, Keycloak +
+#   its Postgres, Redis, Kafka/Zookeeper) and `app-network` (Eureka, Config
+#   Server, gateway, the 5 application services) - app services are
+#   multi-homed onto both since they need their respective data stores.
+#   Not marking data-network `internal: true`: every service here also
+#   publishes a host port, and published-port reachability on an internal
+#   bridge network is inconsistent across Docker Engine/Desktop versions
+#   (same reasoning as food-ordering-system's and furniture_store's Doc 2).
+# - Resource limits and log rotation added to every service - neither existed
+#   before.
+#
+# Real deployment target is Kubernetes (see deployments/, configMaps/,
+# Secrets/) - this file is the local-dev path, which is why Eureka/Config
+# Server exist here at all (PORTFOLIO.md: production uses Spring Cloud
+# Kubernetes' own in-cluster discovery, not a separate registry).
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-security: &default-security
+  security_opt:
+    - no-new-privileges:true
+
 services:
   # MySQL
   mysql:
@@ -9,10 +50,20 @@ services:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in .env}
       MYSQL_DATABASE: mscv_information
     networks:
-      - app-network-containers
+      - data-network
     volumes:
       - mysql-data-pr2:/var/lib/mysql
     restart: always
+    mem_limit: 768m
+    cpus: 1.0
+    logging: *default-logging
+    <<: *default-security
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+      start_period: 30s
 
   # Keycloak
   keycloak:
@@ -22,7 +73,8 @@ services:
     ports:
       - "8181:8181"
     depends_on:
-      - db-keycloak
+      db-keycloak:
+        condition: service_healthy
     environment:
       DB_VENDOR: POSTGRES
       DB_ADDR: db-keycloak
@@ -34,10 +86,24 @@ services:
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?set KEYCLOAK_ADMIN_PASSWORD in .env}
       KC_HTTP_PORT: 8181
     networks:
-      - app-network-containers
+      - data-network
+      - app-network
     volumes:
       - keycloak-data-pr2:/opt/keycloak/data
     restart: always
+    mem_limit: 1g
+    cpus: 1.0
+    logging: *default-logging
+    <<: *default-security
+    healthcheck:
+      # Keycloak 21's start-dev image has no curl/wget, and /health isn't
+      # enabled by default without extra config - this checks the port
+      # itself accepts TCP connections rather than an HTTP health path.
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8181 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 45s
 
   # PostgreSQL for Keycloak
   db-keycloak:
@@ -50,8 +116,21 @@ services:
       POSTGRES_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?set KEYCLOAK_DB_PASSWORD in .env}
     ports:
       - "5433:5433"
+    # See top-of-file note - without this the container listens on the
+    # default 5432, not the 5433 everything else here assumes.
+    command: ["-p", "5433"]
     networks:
-      - app-network-containers
+      - data-network
+    mem_limit: 512m
+    cpus: 0.5
+    logging: *default-logging
+    <<: *default-security
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U uncledave -p 5433"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
 
   # Eureka Server
   eureka-server:
@@ -60,20 +139,41 @@ services:
     ports:
       - "8761:8761"
     networks:
-      - app-network-containers
+      - app-network
     restart: on-failure
+    mem_limit: 512m
+    cpus: 0.5
+    logging: *default-logging
+    <<: *default-security
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:8761/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+      start_period: 30s
 
   # Config Server
   server-configuration:
     image: joshua76i/config-server-pr2:latest
     container_name: config-container
     depends_on:
-      - eureka-server
+      eureka-server:
+        condition: service_healthy
     ports:
       - "8888:8888"
     networks:
-      - app-network-containers
+      - app-network
     restart: on-failure
+    mem_limit: 512m
+    cpus: 0.5
+    logging: *default-logging
+    <<: *default-security
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:8888/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+      start_period: 30s
 
   # Spring Cloud Gateway
   gateway:
@@ -81,9 +181,27 @@ services:
     container_name: gateway-container
     ports:
       - "8081:8081"
+    environment:
+      - ZIPKIN_ENDPOINT=http://zipkin:9411/api/v2/spans
+    depends_on:
+      server-configuration:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
-      - app-network-containers
+      - data-network
+      - app-network
     restart: on-failure
+    mem_limit: 768m
+    cpus: 1.0
+    logging: *default-logging
+    <<: *default-security
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:8081/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+      start_period: 45s
 
   # Redis
   redis:
@@ -94,12 +212,41 @@ services:
       - "6379:6379"
     command: redis-server --loglevel warning --requirepass ${REDIS_PASSWORD:?set REDIS_PASSWORD in .env}
     networks:
-      - app-network-containers
+      - data-network
     volumes:
       - redis-data-pr2:/data  # Custom volume name
-  
+    mem_limit: 512m
+    cpus: 0.5
+    logging: *default-logging
+    <<: *default-security
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a $${REDIS_PASSWORD} ping | grep PONG || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
 
-  
+  # Zipkin (Doc 8) - not gated on by any service's depends_on: a trace
+  # export failure just drops spans silently, it doesn't fail requests, so
+  # it doesn't belong in the same "must be ready first" tier as MySQL/Kafka.
+  zipkin:
+    image: openzipkin/zipkin:3.3
+    container_name: zipkin
+    ports:
+      - "9411:9411"
+    networks:
+      - app-network
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: 0.5
+    logging: *default-logging
+    <<: *default-security
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:9411/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+      start_period: 30s
 
   # Administrator Service
   server-administrator:
@@ -107,9 +254,27 @@ services:
     container_name: admin-container
     ports:
       - "8900:8900"
+    environment:
+      - ZIPKIN_ENDPOINT=http://zipkin:9411/api/v2/spans
+    depends_on:
+      mysql:
+        condition: service_healthy
+      server-configuration:
+        condition: service_healthy
     networks:
-      - app-network-containers
+      - data-network
+      - app-network
     restart: on-failure
+    mem_limit: 768m
+    cpus: 1.0
+    logging: *default-logging
+    <<: *default-security
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:8900/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+      start_period: 45s
 
   # Information Service
   information-service:
@@ -117,9 +282,27 @@ services:
     container_name: server-info-container
     ports:
       - "8111:8111"
+    environment:
+      - ZIPKIN_ENDPOINT=http://zipkin:9411/api/v2/spans
+    depends_on:
+      mysql:
+        condition: service_healthy
+      server-configuration:
+        condition: service_healthy
     networks:
-      - app-network-containers
+      - data-network
+      - app-network
     restart: on-failure
+    mem_limit: 768m
+    cpus: 1.0
+    logging: *default-logging
+    <<: *default-security
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:8111/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+      start_period: 45s
 
   # Register Service
   server-register:
@@ -127,9 +310,29 @@ services:
     container_name: server-register-container
     ports:
       - "8902:8902"
+    environment:
+      - ZIPKIN_ENDPOINT=http://zipkin:9411/api/v2/spans
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      server-configuration:
+        condition: service_healthy
     networks:
-      - app-network-containers
+      - data-network
+      - app-network
     restart: on-failure
+    mem_limit: 768m
+    cpus: 1.0
+    logging: *default-logging
+    <<: *default-security
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:8902/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+      start_period: 45s
 
   # Web Page Service
   web-page:
@@ -137,26 +340,61 @@ services:
     container_name: web-page-container
     ports:
       - "8903:8903"
+    environment:
+      - ZIPKIN_ENDPOINT=http://zipkin:9411/api/v2/spans
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      server-configuration:
+        condition: service_healthy
     networks:
-      - app-network-containers
+      - data-network
+      - app-network
     restart: on-failure
+    mem_limit: 768m
+    cpus: 1.0
+    logging: *default-logging
+    <<: *default-security
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:8903/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+      start_period: 45s
 
   # Zookeeper
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
     ports:
       - 22181:2181
     networks:
-      - app-network-containers
-
+      - data-network
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: 0.5
+    logging: *default-logging
+    <<: *default-security
+    healthcheck:
+      test: ["CMD-SHELL", "cub zk-ready localhost:2181 5000 || exit 1"]
+      interval: 10s
+      timeout: 8s
+      retries: 6
+      start_period: 20s
 
   kafka:
     image: confluentinc/cp-kafka:latest
+    container_name: kafka
     depends_on:
-      - zookeeper
+      zookeeper:
+        condition: service_healthy
     ports:
       - 29092:29092
     environment:
@@ -166,12 +404,26 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_CREATE_TOPICS: "flow:1:1" # Topic name: "flow", 1 partition, replication factor 1  # Topic name: "flow", 1 partition, replication factor 1
+      KAFKA_CREATE_TOPICS: "flow:1:1" # Topic name: "flow", 1 partition, replication factor 1
     networks:
-      - app-network-containers
+      - data-network
+    restart: unless-stopped
+    mem_limit: 1g
+    cpus: 1.0
+    logging: *default-logging
+    <<: *default-security
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+      start_period: 40s
 
 networks:
-  app-network-containers:
+  data-network:
+    driver: bridge
+  app-network:
+    driver: bridge
 
 volumes:
   redis-data-pr2: {}  # Custom volume name

@@ -18,7 +18,7 @@ public class PromotionRouter {
 
     @Bean
     public RouterFunction<ServerResponse> promotionsRouterFunction(PromotionHandler clientHandler) {
-        return route(POST("api/promotions"), clientHandler::createPromotion) // Create a new client
+        return route(POST("/api/promotions"), clientHandler::createPromotion) // Create a new client
                 .andRoute(GET("/api/promotions"), clientHandler::getAllPromotions) // Get all clients
                 .andRoute(GET("/api/promotions/startDate/{startDate}"), clientHandler::getPromotionStartDate) // Get client by username
                 .andRoute(GET("/api/promotions/endDate/{endDate}"), clientHandler::getPromotionEndDate) // Get client by username

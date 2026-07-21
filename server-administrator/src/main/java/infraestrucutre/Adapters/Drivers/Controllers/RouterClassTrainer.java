@@ -35,8 +35,9 @@ public class RouterClassTrainer {
                         // Route for getting work classes by trainer
                         .GET("/{username}/workclasses", handler::getWorkClassesByTrainer)
 
-                        // Route for updating trainer's password
-                        .PUT("/{username}/password/{oldPassword}/{newPassword}", handler::updateTrainerPassword)
+                        // Route for updating trainer's password - credentials moved to the JSON
+                        // body (were path segments: leak into access logs/browser history/Referer).
+                        .PUT("/{username}/password", handler::updateTrainerPassword)
 
                         // Route for updating trainer's username
                         .PUT("/username/{oldUsername}/{newUsername}", handler::updateTrainerUsername)
@@ -56,8 +57,9 @@ public class RouterClassTrainer {
                         // Route for dissociating a class from a trainer
                         .DELETE("/{username}/removeClass/{className}", handler::dessociateClassToTrainer)
 
-                        // Route for deleting a trainer by username and password
-                        .DELETE("/{username}/delete/{password}", handler::deleteClassTrainerByUsernameWithPassword)
+                        // Route for deleting a trainer by username and password - password moved
+                        // to the JSON body, same reasoning as the password route above.
+                        .DELETE("/{username}/delete", handler::deleteClassTrainerByUsernameWithPassword)
                         .build());
     }
 }

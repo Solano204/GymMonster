@@ -9,6 +9,8 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
 import application.Ports.Drivers.IServices.ClientServiceInterface;
+import infraestrucutre.Adapters.Drivens.DTOS.DtoChangePassword;
+import infraestrucutre.Adapters.Drivens.DTOS.DtoDeleteAccount;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoDetailUserSent;
 import infraestrucutre.Adapters.Drivens.Entities.AllClient;
 import lombok.AllArgsConstructor;
@@ -69,15 +71,21 @@ public class ClientHandler {
     }
 
     // Handler to delete a client
+    // Was reading a "password" path variable that the route (ClientRouter)
+    // never actually declares - request.pathVariable("password") threw
+    // IllegalArgumentException on every single call, so this endpoint was
+    // completely broken. Reading the password from the JSON body fixes both
+    // that crash and the credentials-in-URL issue at once (same reasoning
+    // and DTO shape as web-page's already-fixed RouterRegister).
     public Mono<ServerResponse> deleteClient(ServerRequest request) {
         String username = request.pathVariable("username");
-        String password = request.pathVariable("password");
 
         return errorHandler(
-                clientService.deleteClient(username, password)
-                        .flatMap(response -> ServerResponse.ok()
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .bodyValue(response)));
+                request.bodyToMono(DtoDeleteAccount.class)
+                        .flatMap(body -> clientService.deleteClient(username, body.password())
+                                .flatMap(response -> ServerResponse.ok()
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .bodyValue(response))));
     }
 
     // Handler to validate if a username exists
@@ -102,17 +110,18 @@ public class ClientHandler {
                                 .bodyValue(exists)));
     }
 
-    // Handler to change password
+    // Handler to change password - reads credentials from the JSON body, not
+    // path segments (same fix as web-page's RouterRegister/deleteClient above).
     public Mono<ServerResponse> changePassword(ServerRequest request) {
         String username = request.pathVariable("username");
-        String oldPassword = request.pathVariable("oldPassword");
-        String newPassword = request.pathVariable("newPassword");
 
         return errorHandler(
-                clientService.changePassword(username, oldPassword, newPassword)
-                        .flatMap(response -> ServerResponse.ok()
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .bodyValue(response)));
+                request.bodyToMono(DtoChangePassword.class)
+                        .flatMap(body -> clientService
+                                .changePassword(username, body.oldPassword(), body.newPassword())
+                                .flatMap(response -> ServerResponse.ok()
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .bodyValue(response))));
     }
 
     // Handler to change email

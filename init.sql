@@ -210,4 +210,26 @@ CREATE TABLE pool (
     end_date DATE
 );
 
+-- Doc 6: clients/per_trainer/trainers_class had no uniqueness constraint on
+-- username/email at all - the application relies entirely on existsByUsername/
+-- existsByEmail checks (RegisterService, ClientHandler, etc.) run before each
+-- insert, which is a real TOCTOU race: two concurrent registrations for the
+-- same username can both pass that check before either commits, producing two
+-- rows with the same "unique" username. A UNIQUE index makes the database
+-- itself the enforcement point, closing that race - not just an index for
+-- lookup speed (though every login/lookup path filters by username too, so
+-- it helps there as well; MySQL/InnoDB already auto-indexes FK columns, which
+-- is why only username/email needed adding here, unlike Postgres).
+ALTER TABLE clients
+    ADD CONSTRAINT uq_clients_username UNIQUE (username),
+    ADD CONSTRAINT uq_clients_email UNIQUE (email);
+
+ALTER TABLE per_trainer
+    ADD CONSTRAINT uq_per_trainer_username UNIQUE (username),
+    ADD CONSTRAINT uq_per_trainer_email UNIQUE (email);
+
+ALTER TABLE trainers_class
+    ADD CONSTRAINT uq_trainers_class_username UNIQUE (username),
+    ADD CONSTRAINT uq_trainers_class_email UNIQUE (email);
+
 

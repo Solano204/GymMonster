@@ -38,46 +38,41 @@ public class ScheduleHandler {
     // Get all Schedules
     public Mono<ServerResponse> getAllSchedules(ServerRequest request) {
         return errorHandler(
-                ServerResponse.ok()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(scheduleService.getAllSchedules(), Schedule.class));
+                scheduleService.getAllSchedules()
+                        .collectList()
+                        .flatMap(list -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(list)));
     }
 
     // Get a Schedule by start time
     public Mono<ServerResponse> getScheduleByStartTime(ServerRequest request) {
         String startTime = request.pathVariable("startTime");
 
-        // Assuming the service returns a Flux<Schedule>
+        // collectList() on an empty Flux still emits a value (an empty List), so
+        // switchIfEmpty() after it never fires - check the list's emptiness explicitly instead.
         return errorHandler(scheduleService.getScheduleByStartTime(startTime)
-                .collectList() // Collect the Flux<Schedule> into a List
-                .flatMap(schedules -> ServerResponse.ok()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .bodyValue(schedules)) // Return the collected list as the response
-                .switchIfEmpty(ServerResponse.notFound().build())); // Handle empty case
+                .collectList()
+                .flatMap(schedules -> schedules.isEmpty()
+                        ? ServerResponse.notFound().build()
+                        : ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(schedules)));
     }
 
     // Get a Schedule by day
     public Mono<ServerResponse> getScheduleByDay(ServerRequest request) {
         String day = request.pathVariable("day");
-        // Assuming the service returns a Flux<Schedule>
-        return 
-        errorHandler(scheduleService.getScheduleByDay(day)
-                .collectList() // Collect the Flux<Schedule> into a List
-                .flatMap(schedules -> ServerResponse.ok()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .bodyValue(schedules)) // Return the collected list as the response
-                .switchIfEmpty(ServerResponse.notFound().build())); // Handle the case when no schedules are found
+        return errorHandler(scheduleService.getScheduleByDay(day)
+                .collectList()
+                .flatMap(schedules -> schedules.isEmpty()
+                        ? ServerResponse.notFound().build()
+                        : ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(schedules)));
     }
 
     public Mono<ServerResponse> getScheduleByDayGym(ServerRequest request) {
         String day = request.pathVariable("day");
-        // Assuming the service returns a Flux<Schedule>
         return errorHandler(scheduleService.getSchedulesByDayGym(day)
-                .collectList() // Collect the Flux<Schedule> into a List
-                .flatMap(schedules -> ServerResponse.ok()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .bodyValue(schedules)) // Return the collected list as the response
-                .switchIfEmpty(ServerResponse.notFound().build())); // Handle the case when no schedules are found
+                .collectList()
+                .flatMap(schedules -> schedules.isEmpty()
+                        ? ServerResponse.notFound().build()
+                        : ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(schedules)));
     }
 
     // Update a Schedule by ID

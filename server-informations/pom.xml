@@ -55,10 +55,15 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-r2dbc</artifactId>
 		</dependency>
+		<!-- dev.miku:r2dbc-mysql was abandoned years ago and predates the io.r2dbc.spi.Parameters
+		     API that this app's Spring Data R2DBC version relies on for parameter binding - it
+		     throws "Cannot encode value of type Parameters$InParameter" on ordinary queries.
+		     io.asyncer:r2dbc-mysql is the actively-maintained successor (same driver name/URL
+		     scheme, so no application code changes needed). -->
 		<dependency>
-		    <groupId>dev.miku</groupId>
+		    <groupId>io.asyncer</groupId>
 		    <artifactId>r2dbc-mysql</artifactId>
-		    <version>0.8.2.RELEASE</version>
+		    <version>1.1.3</version>
 		</dependency>
 
    <dependency>
@@ -127,6 +132,15 @@
     <scope>test</scope>
 </dependency>
 
+<!-- Used by the new R2dbcContainerTest base (self-contained MySQL schema/query
+     integration tests) - version is managed by spring-boot-starter-parent's
+     imported Testcontainers BOM, same as junit-jupiter above. -->
+<dependency>
+    <groupId>org.testcontainers</groupId>
+    <artifactId>mysql</artifactId>
+    <scope>test</scope>
+</dependency>
+
  <dependency>
     <groupId>com.github.dasniko</groupId>
     <artifactId>testcontainers-keycloak</artifactId>
@@ -150,6 +164,14 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-tracing-bridge-brave</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.zipkin.reporter2</groupId>
+            <artifactId>zipkin-reporter-brave</artifactId>
         </dependency>
 
 	</dependencies>

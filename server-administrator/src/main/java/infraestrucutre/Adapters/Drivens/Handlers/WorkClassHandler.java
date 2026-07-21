@@ -26,20 +26,20 @@ public class WorkClassHandler {
 
     // Get all work classes
     public Mono<ServerResponse> getAllWorkClasses(ServerRequest request) {
-        return errorHandler(
-                ServerResponse.ok()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(workClassService.getAllWorkClasses(), WorkClass.class));
+        return workClassService.getAllWorkClasses()
+                .collectList()
+                .flatMap(list -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(list))
+                .onErrorResume(this::errorHandler);
     }
 
     // Get schedules for a specific work class
     public Mono<ServerResponse> getWorkClassSchedules(ServerRequest request) {
         String name = request.pathVariable("name");
 
-        return errorHandler(
-                ServerResponse.ok()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(workClassService.getCSchedulesByWorkClassWithPagination(name), Schedule.class));
+        return workClassService.getCSchedulesByWorkClassWithPagination(name)
+                .collectList()
+                .flatMap(list -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(list))
+                .onErrorResume(this::errorHandler);
     }
 
     // Get clients by work class with pagination
@@ -48,11 +48,10 @@ public class WorkClassHandler {
         int page = Integer.parseInt(request.queryParam("page").orElse("0")); // Default to page 0
         int size = Integer.parseInt(request.queryParam("size").orElse("10")); // Default size 10
 
-        return errorHandler(
-                ServerResponse.ok()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(workClassService.getClientsByWorkClassWithPagination(name, page, size),
-                                DtoDetailUserReciving.class));
+        return workClassService.getClientsByWorkClassWithPagination(name, page, size)
+                .collectList()
+                .flatMap(list -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(list))
+                .onErrorResume(this::errorHandler);
     }
 
     // Get trainers by work class with pagination
@@ -61,62 +60,54 @@ public class WorkClassHandler {
         int page = Integer.parseInt(request.queryParam("page").orElse("0")); // Default to page 0
         int size = Integer.parseInt(request.queryParam("size").orElse("10")); // Default size 10
 
-        return errorHandler(
-                ServerResponse.ok()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(workClassService.getTrainersByWorkClassWithPagination(name, page, size),
-                                DtoDetailUserReciving.class));
+        return workClassService.getTrainersByWorkClassWithPagination(name, page, size)
+                .collectList()
+                .flatMap(list -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(list))
+                .onErrorResume(this::errorHandler);
     }
 
     // Create a new work class
     public Mono<ServerResponse> createWorkClass(ServerRequest request) {
         return request.bodyToMono(WorkClass.class)
-                .flatMap(workClass -> errorHandler(
-                        ServerResponse.ok()
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .body(workClassService.createWorkclass(workClass), String.class)
-                ));
+                .flatMap(workClass -> workClassService.createWorkclass(workClass)
+                        .flatMap(created -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(created)))
+                .onErrorResume(this::errorHandler);
     }
 
     // Update a specific work class
     public Mono<ServerResponse> updateWorkClass(ServerRequest request) {
         String name = request.pathVariable("name");
         return request.bodyToMono(WorkClass.class)
-                .flatMap(workClass -> errorHandler(
-                        ServerResponse.ok()
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .body(workClassService.updateWorkClass(workClass, name), String.class)
-                ));
+                .flatMap(workClass -> workClassService.updateWorkClass(workClass, name)
+                        .flatMap(updated -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(updated)))
+                .onErrorResume(this::errorHandler);
     }
 
     // Delete a work class by name
     public Mono<ServerResponse> deleteWorkClass(ServerRequest request) {
         String name = request.pathVariable("name");
 
-        return errorHandler(
-                ServerResponse.ok()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(workClassService.deleteWorkClass(name), String.class));
+        return workClassService.deleteWorkClass(name)
+                .flatMap(message -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(message))
+                .onErrorResume(this::errorHandler);
     }
 
     // Error handler method
-    private Mono<ServerResponse> errorHandler(Mono<ServerResponse> response) {
-        return response.onErrorResume(error -> {
-            if (error instanceof WebClientResponseException errorResponse) {
-                if (errorResponse.getStatusCode() == HttpStatus.NOT_FOUND) {
-                    Map<String, Object> body = new HashMap<>();
-                    body.put("error", "Work class not found: " + errorResponse.getMessage());
-                    body.put("timestamp", new Date());
-                    body.put("status", errorResponse.getStatusCode().value());
-                    return ServerResponse.status(HttpStatus.NOT_FOUND).bodyValue(body);
-                }
-                return ServerResponse.status(errorResponse.getStatusCode())
-                        .bodyValue(errorResponse.getResponseBodyAsString());
+    private Mono<ServerResponse> errorHandler(Throwable error) {
+        if (error instanceof WebClientResponseException errorResponse) {
+            if (errorResponse.getStatusCode() == HttpStatus.NOT_FOUND) {
+                Map<String, Object> body = new HashMap<>();
+                body.put("error", "Work class not found: " + errorResponse.getMessage());
+                body.put("timestamp", new Date());
+                body.put("status", errorResponse.getStatusCode().value());
+                return ServerResponse.status(HttpStatus.NOT_FOUND).bodyValue(body);
             }
-            Map<String, Object> body = new HashMap<>();
-            body.put("error", "An unexpected error occurred");
-            body.put("timestamp", new Date());
-            return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).bodyValue(body);
-        });
+            return ServerResponse.status(errorResponse.getStatusCode())
+                    .bodyValue(errorResponse.getResponseBodyAsString());
+        }
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", "An unexpected error occurred");
+        body.put("timestamp", new Date());
+        return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).bodyValue(body);
     }
 }

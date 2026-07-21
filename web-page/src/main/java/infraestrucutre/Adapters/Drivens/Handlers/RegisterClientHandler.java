@@ -9,8 +9,11 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
 import application.Ports.Drivers.IServices.ClientServiceInterface;
+import infraestrucutre.Adapters.Drivens.DTOS.DtoChangePassword;
+import infraestrucutre.Adapters.Drivens.DTOS.DtoDeleteAccount;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoDetailUserSent;
 import infraestrucutre.Adapters.Drivens.Entities.AllClient;
+import infraestrucutre.Adapters.Drivens.Entities.WorkClass;
 import infraestrucutre.Adapters.Drivens.ImpServices.RegisterService;
 import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
@@ -94,27 +97,29 @@ public class RegisterClientHandler {
                         .switchIfEmpty(ServerResponse.notFound().build()));
     }
 
+    // Credentials travel in the request body, not the URL - a password in the
+    // path would end up in browser history, access logs, and Referer headers.
     public Mono<ServerResponse> updateClientPassword(ServerRequest request) {
         String username = request.pathVariable("username");
-        String newPassword = request.pathVariable("newPassword");
-        String oldPassword = request.pathVariable("oldPassword");
         return errorHandler(
-                clientService.updateClientPassword(username, newPassword, oldPassword)
-                        .flatMap(client -> ServerResponse.ok()
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .bodyValue(client))
-                        .switchIfEmpty(ServerResponse.notFound().build()));
+                request.bodyToMono(DtoChangePassword.class)
+                        .flatMap(body -> clientService
+                                .updateClientPassword(username, body.newPassword(), body.oldPassword())
+                                .flatMap(client -> ServerResponse.ok()
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .bodyValue(client))
+                                .switchIfEmpty(ServerResponse.notFound().build())));
     }
 
     public Mono<ServerResponse> deleteClient(ServerRequest request) {
             String username = request.pathVariable("username");
-            String password = request.pathVariable("password");
             return errorHandler(
-                            clientService.deleteAccount(username, password)
-                                            .flatMap(client -> ServerResponse.ok()
-                                                            .contentType(MediaType.APPLICATION_JSON)
-                                                            .bodyValue(client))
-                                            .switchIfEmpty(ServerResponse.notFound().build()));
+                            request.bodyToMono(DtoDeleteAccount.class)
+                                            .flatMap(body -> clientService.deleteAccount(username, body.password())
+                                                            .flatMap(client -> ServerResponse.ok()
+                                                                            .contentType(MediaType.APPLICATION_JSON)
+                                                                            .bodyValue(client))
+                                                            .switchIfEmpty(ServerResponse.notFound().build())));
     }
     
 
@@ -146,17 +151,19 @@ public class RegisterClientHandler {
             String username = request.pathVariable("username");
 
             return errorHandler(
-                            ServerResponse.ok()
-                                            .contentType(MediaType.APPLICATION_JSON)
-                                            .body(clientService.getWorkClassesByClientId(username), AllClient.class));
+                            clientService.getWorkClassesByClientId(username)
+                                            .flatMap(list -> ServerResponse.ok()
+                                                            .contentType(MediaType.APPLICATION_JSON)
+                                                            .bodyValue(list)));
     }
     public Mono<ServerResponse> getClient(ServerRequest request) {
             String username = request.pathVariable("username");
 
             return errorHandler(
-                            ServerResponse.ok()
-                                            .contentType(MediaType.APPLICATION_JSON)
-                                            .body(clientService.getClient(username), AllClient.class));
+                            clientService.getClient(username)
+                                            .flatMap(client -> ServerResponse.ok()
+                                                            .contentType(MediaType.APPLICATION_JSON)
+                                                            .bodyValue(client)));
     }
 
     private Mono<ServerResponse> errorHandler(Mono<ServerResponse> response) {

@@ -25,6 +25,7 @@ import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.BodyInserters;
@@ -46,6 +47,22 @@ public class RedisTokenValidationFilter implements GlobalFilter, Ordered {
     private final ReactiveJwtDecoder jwtDecoder;
     private static final AntPathMatcher PATH_MATCHER = new AntPathMatcher();
     private static final Set<String> EXCLUDED_PATHS = Set.of("GymMonster/auth/login", "GymMonster/auth/logout");
+    // Mirrors web-page's own SecurityConfig public-path list (and the matching
+    // permitAll() entries in gateway's SecurityConfig): anonymous site visitors and
+    // not-yet-registered clients need to reach these without a token. Without this,
+    // registerClient in particular is unreachable by definition - a brand-new client
+    // has no account yet to obtain a token with.
+    private static final Set<String> PUBLIC_GET_PATHS = Set.of(
+            "/api/page/allMemberships",
+            "/api/page/allPools",
+            "/api/page/promotions/**",
+            "/api/page/allSpecialties",
+            "/api/page/workclasses/**");
+    private static final String PUBLIC_REGISTER_PATH = "/api/page/registerClient";
+    // Sentinel used to tell "no cached token was found" apart from a real
+    // cached value - see the comment on filter() for why this can't be a
+    // switchIfEmpty() chained after the flatMap below.
+    private static final String NO_CACHED_TOKEN = "__NO_CACHED_TOKEN__";
 
     private final RedisHandlerInterface redisHandler;
     private final ServicesUrl servicesUrl;
@@ -57,7 +74,7 @@ public class RedisTokenValidationFilter implements GlobalFilter, Ordered {
        
         String requestPath = exchange.getRequest().getURI().getPath();
         // Check if the path should skip validation
-        if (shouldSkipValidation(requestPath)) {
+        if (shouldSkipValidation(requestPath) || isPublicPageRequest(exchange)) {
             return chain.filter(exchange); // Skip token validation
         }
 
@@ -68,16 +85,42 @@ public class RedisTokenValidationFilter implements GlobalFilter, Ordered {
             return handleError(exchange, "Missing token or username", HttpStatus.UNAUTHORIZED);
         }
 
+        // switchIfEmpty() used to be chained after this whole flatMap instead of
+        // directly on the Redis read below. chain.filter(exchange) returns
+        // Mono<Void>, which is *always* empty per Reactive Streams even on a
+        // successful completion - so that switchIfEmpty silently re-ran the
+        // "no cached token" branch (re-validating, re-caching, sometimes
+        // re-refreshing) after every single request that took any branch
+        // ending in chain.filter(exchange), cached-token-matches included.
+        // defaultIfEmpty on the source Mono itself is the only place "no
+        // cached token" can be told apart from "the real branch just
+        // completed empty".
         return redisTemplate.opsForValue().get("access_token:" + username)
+                .defaultIfEmpty(NO_CACHED_TOKEN)
                 .flatMap(cachedToken -> {
-                    if (Objects.equals(cachedToken, token)) {
+                    if (NO_CACHED_TOKEN.equals(cachedToken)) {
+                        return validateToken(token)
+                                .flatMap(isValid -> {
+                                    if (isValid) {
+                                        return redisHandler.saveAccessToken(username, token)
+                                                .then(Mono.defer(() -> chain.filter(exchange)));
+                                    } else {
+                                        return handleError(exchange, "Invalid token for user: " + username,
+                                                HttpStatus.UNAUTHORIZED);
+                                    }
+                                })
+                                .onErrorResume(e -> {
+                                    return handleError(exchange, "Token validation error: " + e.getMessage(),
+                                            HttpStatus.UNAUTHORIZED);
+                                });
+                    } else if (Objects.equals(cachedToken, token)) {
                         return chain.filter(exchange); // Proceed if tokens match
                     } else {
                         return validateToken(token)
                                 .flatMap(isValid -> {
                                     if (isValid) {
                                         return redisHandler.saveAccessToken(username, token)
-                                                .then(chain.filter(exchange)); // Cache and proceed
+                                                .then(Mono.defer(() -> chain.filter(exchange))); // Cache and proceed
                                     } else {
                                         return attemptRefreshToken(exchange)
                                                 .flatMap(newTokens -> cacheNewTokens(username, newTokens)
@@ -93,23 +136,7 @@ public class RedisTokenValidationFilter implements GlobalFilter, Ordered {
                                             HttpStatus.UNAUTHORIZED);
                                 });
                     }
-                })
-                .switchIfEmpty(Mono.defer(() -> {
-                    return validateToken(token)
-                            .flatMap(isValid -> {
-                                if (isValid) {
-                                    return redisHandler.saveAccessToken(username, token)
-                                            .then(chain.filter(exchange));
-                                } else {
-                                    return handleError(exchange, "Invalid token for user: " + username,
-                                            HttpStatus.UNAUTHORIZED);
-                                }
-                            })
-                            .onErrorResume(e -> {
-                                return handleError(exchange, "Token validation error: " + e.getMessage(),
-                                        HttpStatus.UNAUTHORIZED);
-                            });
-                }));
+                });
     }
 
     public Mono<Void> handleError(ServerWebExchange exchange, String message, HttpStatus status) {
@@ -141,6 +168,18 @@ public class RedisTokenValidationFilter implements GlobalFilter, Ordered {
     // Check if validation should be skipped based on specific patterns
     public boolean shouldSkipValidation(String requestPath) {
         return EXCLUDED_PATHS.stream().anyMatch(excludedPath -> PATH_MATCHER.match(excludedPath, requestPath));
+    }
+
+    public boolean isPublicPageRequest(ServerWebExchange exchange) {
+        String requestPath = exchange.getRequest().getURI().getPath();
+        HttpMethod method = exchange.getRequest().getMethod();
+        if (HttpMethod.GET.equals(method)) {
+            return PUBLIC_GET_PATHS.stream().anyMatch(pattern -> PATH_MATCHER.match(pattern, requestPath));
+        }
+        if (HttpMethod.POST.equals(method)) {
+            return PUBLIC_REGISTER_PATH.equals(requestPath);
+        }
+        return false;
     }
 
     @Override

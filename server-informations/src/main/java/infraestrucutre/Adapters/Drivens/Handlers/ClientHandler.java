@@ -8,6 +8,9 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
 import application.Ports.Drivers.IServices.ClientServiceInterface;
+import infraestrucutre.Adapters.Drivens.DTOS.DtoChangePassword;
+import infraestrucutre.Adapters.Drivens.DTOS.DtoChangeUsername;
+import infraestrucutre.Adapters.Drivens.DTOS.DtoDeleteAccount;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoDetailUserSent;
 import infraestrucutre.Adapters.Drivens.Entities.AllClient;
 import infraestrucutre.Adapters.Drivens.Entities.Client;
@@ -25,22 +28,24 @@ public class ClientHandler {
     // Handler for deleting a client
     public Mono<ServerResponse> deleteClient(ServerRequest request) {
         String username = request.pathVariable("username");
-        String password = request.pathVariable("password");
-        return errorHandler(clientService.deleteClient(username, password)
-                .flatMap(result -> ServerResponse.ok().bodyValue(result)));
+        return errorHandler(
+                request.bodyToMono(DtoDeleteAccount.class)
+                        .flatMap(body -> clientService.deleteClient(username, body.password())
+                                .flatMap(result -> ServerResponse.ok().bodyValue(result))));
     }
 
     public Mono<ServerResponse> getAllClientsAD(ServerRequest request) {
         int page = Integer.parseInt(request.queryParam("page").orElse("0"));
         int size = Integer.parseInt(request.queryParam("size").orElse("10"));
 
+        // collectList() on an empty Flux still emits a value (an empty List), so
+        // switchIfEmpty() after it never fires - check the list's emptiness explicitly instead.
         return errorHandler(
                 clientService.getAllClientsAD(page, size)
                         .collectList()
-                        .flatMap(trainers -> ServerResponse.ok()
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .bodyValue(trainers))
-                        .switchIfEmpty(ServerResponse.notFound().build()));
+                        .flatMap(trainers -> trainers.isEmpty()
+                                ? ServerResponse.notFound().build()
+                                : ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(trainers)));
     }
 
     // Handler for getting client membership details
@@ -60,10 +65,9 @@ public class ClientHandler {
 
         return errorHandler(clientService.getWorkClassesByClientId(username)
                 .collectList()
-                .flatMap(workClasses -> ServerResponse.ok()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .bodyValue(workClasses))
-                .switchIfEmpty(ServerResponse.notFound().build()));
+                .flatMap(workClasses -> workClasses.isEmpty()
+                        ? ServerResponse.notFound().build()
+                        : ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(workClasses)));
     }
 
     // Handler for checking if username exists
@@ -109,20 +113,18 @@ public class ClientHandler {
 
         public Mono<ServerResponse> updateClientUsername(ServerRequest request) {
             String username = request.pathVariable("username");
-            String newUsername = request.pathVariable("newUsername");
-            String password = request.pathVariable("password");
-            return clientService.updateClientUsername(username, newUsername,password)
+            return request.bodyToMono(DtoChangeUsername.class)
+                            .flatMap(body -> clientService.updateClientUsername(username, body.newUsername(), body.password())
                             .flatMap(result -> ServerResponse.ok().bodyValue(result)
-                            .switchIfEmpty(ServerResponse.badRequest().bodyValue("username update failed")));
+                            .switchIfEmpty(ServerResponse.badRequest().bodyValue("username update failed"))));
         }
 
     public Mono<ServerResponse> updateClientPassword(ServerRequest request) {
         String username = request.pathVariable("username");
-        String newPassword = request.pathVariable("newPassword");
-        String oldPassword = request.pathVariable("oldPassword");
-        return  clientService.updateClientPassword(username, newPassword,oldPassword )
+        return request.bodyToMono(DtoChangePassword.class)
+                        .flatMap(body -> clientService.updateClientPassword(username, body.newPassword(), body.oldPassword())
                         .flatMap(result -> ServerResponse.ok().bodyValue(result)
-                        .switchIfEmpty(ServerResponse.badRequest().bodyValue("Password update failed")));
+                        .switchIfEmpty(ServerResponse.badRequest().bodyValue("Password update failed"))));
     }
 
     public Mono<ServerResponse> updateClientEmail(ServerRequest request) {

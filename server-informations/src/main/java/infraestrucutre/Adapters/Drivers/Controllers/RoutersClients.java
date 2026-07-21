@@ -20,15 +20,19 @@ public class RoutersClients {
                     .andRoute(GET("/api/clients/AD/allClients"), clientHandler::getAllClientsAD) // Get all clients // Get client by username
                     .andRoute(GET("/api/clients/{username}/allInformation"), clientHandler:: getClientDetailMembershipByClientId) // Get all clients // Get client by username
                     .andRoute(PUT("/api/clients/{username}/updateBasicInformation"), clientHandler::updateClient) // Update client by username
-                    .andRoute(PUT("/api/clients/{username}/{oldPassword}/{newPassword}/changePassword"), clientHandler::updateClientPassword) // Update client password
+                    // Credentials moved off the URL and into the JSON body for changePassword/
+                    // changeUsername/deleteAccount below - path segments leak into access logs,
+                    // browser history, and Referer headers (same fix already applied and tested
+                    // in web-page's RouterRegister/RouterRegisterTest).
+                    .andRoute(PUT("/api/clients/{username}/changePassword"), clientHandler::updateClientPassword) // Update client password
                     .andRoute(PUT("/api/clients/{username}/{email}/changeEmail"), clientHandler::updateClientEmail) // Update client email
-                    .andRoute(PUT("/api/clients/{username}/{newUsername}/{password}/changeUsername"), clientHandler::updateClientUsername) // Update client password
+                    .andRoute(PUT("/api/clients/{username}/changeUsername"), clientHandler::updateClientUsername) // Update client username
                 // Update client email
                     .andRoute(PUT("/api/clients/{username}/{membershipType}/assignMembership"), clientHandler::updateClientMembership) // Update client membership
                     .andRoute(PUT("/api/clients/{username}/{usernameTrainer}/assignTrainer"), clientHandler::updateTrainer) // Update trainer
                     .andRoute(DELETE("/api/clients/{username}/{usernameTrainer}/dessignTrainer"), clientHandler::dessignTrainer) // Assign a trainer
                     .andRoute(DELETE("/api/clients/{username}/{membershipType}/dessignMembership"), clientHandler::dessignMembership) // Assign membership
-                    .andRoute(DELETE("/api/clients/{username}/{password}/deleteAccount"), clientHandler::deleteClient) // Delete client by username and password
+                    .andRoute(DELETE("/api/clients/{username}/deleteAccount"), clientHandler::deleteClient) // Delete client by username and password
                     .andRoute(GET("/api/clients/{username}/workClasses"), clientHandler::getWorkClassesByClientId) // Get work classes by client ID
                     .andRoute(GET("/api/clients/{username}/usernameExist"), clientHandler::existsByUsernameClient) // Check if username exists
                     .andRoute(GET("/api/clients/{email}/emailExist"), clientHandler::existsByEmailClient); // Check if email exists

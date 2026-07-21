@@ -28,8 +28,14 @@ FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 
+# eclipse-temurin runs as root by default - was never given a non-root user.
+RUN groupadd --system spring && useradd --system --gid spring spring
+
 # Copy and rename the JAR file from the builder stage
 COPY --from=builder /app/server-administrator-service/target/server-administrator-0.0.1-SNAPSHOT.jar /app/app-server-administrator.jar
+RUN chown spring:spring /app/app-server-administrator.jar
+
+USER spring
 
 # Expose the port for the Server Administrator
 EXPOSE 8900

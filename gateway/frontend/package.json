@@ -1,0 +1,19 @@
+{
+  "name": "gymmonster-admin-panel",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Explorador generico de endpoints (HTML/CSS/TypeScript, sin frameworks) para los 104 endpoints de GYM_MOSTER (server-administrator, web-page, gateway auth), llamados a traves del gateway.",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "serve": "npx --yes serve -l 5505 .",
+    "test": "tsc && node --test dist/*.test.js"
+  },
+  "devDependencies": {
+    "@types/jsdom": "^21.1.7",
+    "@types/node": "^26.1.1",
+    "jsdom": "^25.0.1",
+    "typescript": "^5.5.4"
+  }
+}

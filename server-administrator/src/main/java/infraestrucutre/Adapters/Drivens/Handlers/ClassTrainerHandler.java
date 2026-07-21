@@ -6,6 +6,8 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
+import infraestrucutre.Adapters.Drivens.DTOS.DtoChangePassword;
+import infraestrucutre.Adapters.Drivens.DTOS.DtoDeleteAccount;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoDetailUserReciving;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoMembershipReciving;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoSpecialtyRecived;
@@ -89,13 +91,13 @@ public class ClassTrainerHandler {
     // Handler to update trainer's password
     public Mono<ServerResponse> updateTrainerPassword(ServerRequest request) {
         String username = request.pathVariable("username");
-        String oldPassword = request.pathVariable("oldPassword");
-        String newPassword = request.pathVariable("newPassword");
 
         return errorHandler(
-                ServerResponse.ok()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(classTrainerService.updateTrainerPassword(username, oldPassword, newPassword), String.class)
+                request.bodyToMono(DtoChangePassword.class)
+                        .flatMap(body -> ServerResponse.ok()
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .body(classTrainerService.updateTrainerPassword(
+                                        username, body.oldPassword(), body.newPassword()), String.class))
         );
     }
 
@@ -174,12 +176,13 @@ public class ClassTrainerHandler {
     // Handler to delete a trainer by username with password
     public Mono<ServerResponse> deleteClassTrainerByUsernameWithPassword(ServerRequest request) {
         String username = request.pathVariable("username");
-        String password = request.pathVariable("password");
 
         return errorHandler(
-                ServerResponse.ok()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(classTrainerService.deleteClassTrainerByUsernameWithPassword(username, password), String.class)
+                request.bodyToMono(DtoDeleteAccount.class)
+                        .flatMap(body -> ServerResponse.ok()
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .body(classTrainerService.deleteClassTrainerByUsernameWithPassword(
+                                        username, body.password()), String.class))
         );
     }
 

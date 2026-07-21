@@ -25,8 +25,14 @@ FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 
+# eclipse-temurin runs as root by default - was never given a non-root user.
+RUN groupadd --system spring && useradd --system --gid spring spring
+
 # Copy and rename the JAR
 COPY --from=builder /app/web-page-service/target/web-page-0.0.1-SNAPSHOT.jar /app/app-web-page.jar
+RUN chown spring:spring /app/app-web-page.jar
+
+USER spring
 
 # Expose port (adjust if necessary)
 EXPOSE 8903

@@ -62,10 +62,10 @@ Flux<DtoInfoTrainer> findAllTrainersAllInformation(
 );
 
     @Query("""
-            SELECT c.id AS trainer_id, c.username, c.email,
-            du.name AS name, du.secondName, du.last_name_p as LastNameP, du.last_name_m as LastNameM, du.age, du.height, du.weight
+            SELECT c.id AS trainer_id, c.username AS mamalon, c.email,
+            du.name AS name, du.second_name, du.last_name_p as LastNameP, du.last_name_m as LastNameM, du.age, du.height, du.weight
             FROM per_trainer c
-            JOIN detail_user du ON c.id_detail = du.id
+            JOIN detail_per_trainer du ON c.id_detail = du.id
             WHERE c.id = :trainerId """)
     Mono<DtoInfoTrainer> findAllInfoTrainer(Long trainerId);
 
@@ -73,7 +73,7 @@ Flux<DtoInfoTrainer> findAllTrainersAllInformation(
             SELECT
             du.name AS name, du.second_name, du.last_name_p, du.last_name_m, du.age, du.height, du.weight
             FROM per_trainer c
-            JOIN detail_user du ON c.id_detail = du.id
+            JOIN detail_per_trainer du ON c.id_detail = du.id
             WHERE c.id = :trainerId """)
     Mono<DetailUser> findInfoTrainer(Long trainerId);
 

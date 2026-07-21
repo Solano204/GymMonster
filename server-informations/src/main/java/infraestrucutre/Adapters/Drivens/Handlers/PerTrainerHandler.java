@@ -12,6 +12,9 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
 import application.Ports.Drivers.IServices.PerTrainerServiceInterface;
+import infraestrucutre.Adapters.Drivens.DTOS.DtoChangePassword;
+import infraestrucutre.Adapters.Drivens.DTOS.DtoChangeUsername;
+import infraestrucutre.Adapters.Drivens.DTOS.DtoDeleteAccount;
 import infraestrucutre.Adapters.Drivens.DTOS.DtoInfoTrainer;
 import infraestrucutre.Adapters.Drivens.Entities.AllTrainer;
 import infraestrucutre.Adapters.Drivens.Entities.DetailPerTrainer;
@@ -82,11 +85,11 @@ public class PerTrainerHandler {
     // Handler to delete a trainer by username and password
     public Mono<ServerResponse> deletePerTrainer(ServerRequest request) {
         String username = request.pathVariable("username");
-        String password = request.pathVariable("password");
 
-        return perTrainerService.deletePerTrainerUsername(username, password)
-                .flatMap(result -> ServerResponse.ok().bodyValue(result))
-                .switchIfEmpty(ServerResponse.notFound().build());
+        return request.bodyToMono(DtoDeleteAccount.class)
+                .flatMap(body -> perTrainerService.deletePerTrainerUsername(username, body.password())
+                        .flatMap(result -> ServerResponse.ok().bodyValue(result))
+                        .switchIfEmpty(ServerResponse.notFound().build()));
     }
 
 
@@ -142,23 +145,23 @@ public class PerTrainerHandler {
     // Update trainer password
     public Mono<ServerResponse> updateTrainerPassword(ServerRequest request) {
         String username = request.pathVariable("username");
-        String newPassword = request.pathVariable("newPassword");
-        String oldPassword = request.pathVariable("oldPassword");
 
         return errorHandler(
-                perTrainerService.updateTrainerPassword(username, newPassword, oldPassword)
-                        .flatMap(result -> ServerResponse.ok().bodyValue(result))
+                request.bodyToMono(DtoChangePassword.class)
+                        .flatMap(body -> perTrainerService
+                                .updateTrainerPassword(username, body.newPassword(), body.oldPassword())
+                                .flatMap(result -> ServerResponse.ok().bodyValue(result)))
         );
     }
 
 
     public Mono<ServerResponse> updateTrainerUsername(ServerRequest request) {
         String oldUsername = request.pathVariable("oldUsername");
-        String newUsername = request.pathVariable("newUsername");
-        String password = request.pathVariable("password");
         return errorHandler(
-            perTrainerService.updateTrainerUsername(oldUsername, newUsername, password)
-                .flatMap(result -> ServerResponse.ok().bodyValue(result))
+            request.bodyToMono(DtoChangeUsername.class)
+                .flatMap(body -> perTrainerService
+                        .updateTrainerUsername(oldUsername, body.newUsername(), body.password())
+                        .flatMap(result -> ServerResponse.ok().bodyValue(result)))
         );
     }
     

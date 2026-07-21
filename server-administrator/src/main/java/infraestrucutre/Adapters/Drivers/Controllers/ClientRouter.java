@@ -27,7 +27,10 @@ public RouterFunction<ServerResponse> clientRoutes(ClientHandler clientHandler) 
             .DELETE("/api/admin/clients/{username}/deleteAccount", clientHandler::deleteClient) // Route to delete a client
             .GET("/api/admin/clients/validate/username/{username}", clientHandler::validateIfUserNameExists) // Route to validate if a username exists
             .GET("/api/admin/clients/validate/email/{email}", clientHandler::validateIfEmailExists) // Route to validate if an email exists
-            .PUT("/api/admin/clients/{username}/change-password/{oldPassword}/{newPassword}", clientHandler::changePassword) // Route to change password
+            // Was /change-password/{oldPassword}/{newPassword} - credentials in a URL leak into
+            // access logs, browser history, and Referer headers. Same fix already applied and
+            // tested in web-page's RouterRegister/RouterRegisterTest; replicated here.
+            .PUT("/api/admin/clients/{username}/change-password", clientHandler::changePassword) // Route to change password
             .PUT("/api/admin/clients/{username}/change-email/{email}", clientHandler::changeEmail) // Route to change email
             .PUT("/api/admin/clients/{username}/change-username/{newUsername}", clientHandler::changeUsername) // Route to change username
             .PUT("/api/admin/clients/{username}/update-info", clientHandler::updateAllInformation) // Route to update all client information
