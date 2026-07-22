@@ -1,0 +1,114 @@
+@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
+@import "tailwindcss";
+
+/* Tailwind v4 class-based dark mode, toggled on <html> by src/lib/theme.tsx
+   (a hand-rolled equivalent of next-themes - this is a Vite app, not
+   Next.js, so that package doesn't apply here). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-display: "Bebas Neue", "Arial Narrow", sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* This app's default identity is the dark "hazard/industrial gym" look
+   (see src/lib/theme.tsx - theme defaults to dark, not system preference,
+   specifically to preserve that branding on first visit). Light is a new
+   variant derived from it, not the other way around - same accent hues
+   (hazard yellow, iron orange, mint), inverted ink/paper/surface roles.
+   Variable names are historical (ink=background, paper=text, named for
+   what they looked like in the original dark-only design) and kept as-is
+   since ~16 files already reference them via var(--color-*). */
+:root,
+.light {
+  --color-ink: #f5f3ef;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ede9e1;
+  --color-border: #d8d4cb;
+  --color-hazard: #b38200;
+  --color-hazard-dim: #f2dfa3;
+  --color-iron: #c1440e;
+  --color-iron-dim: #f3c9b3;
+  --color-mint: #2f7a58;
+  --color-paper: #14161a;
+  --color-muted: #5c626a;
+}
+
+.dark {
+  --color-ink: #14161a;
+  --color-surface: #1c1f24;
+  --color-surface-raised: #24282f;
+  --color-border: #2d323a;
+  --color-hazard: #f2b705;
+  --color-hazard-dim: #7a5f0a;
+  --color-iron: #c1440e;
+  --color-iron-dim: #6b280c;
+  --color-mint: #4fae83;
+  --color-paper: #ede9e2;
+  --color-muted: #9aa0a8;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background-color: var(--color-ink);
+  background-image:
+    radial-gradient(circle at 15% 0%, rgba(242, 183, 5, 0.05), transparent 45%),
+    radial-gradient(circle at 100% 100%, rgba(193, 68, 14, 0.06), transparent 40%);
+  color: var(--color-paper);
+  font-family: var(--font-body);
+  transition: background-color 0.2s ease, color 0.2s ease;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-hazard);
+  color: var(--color-ink);
+}
+
+/* Hazard stripe divider — the page's signature motif, borrowed from the
+   diagonal caution tape wrapped around gym equipment / free-weight racks. */
+.hazard-rule {
+  height: 6px;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    var(--color-hazard),
+    var(--color-hazard) 10px,
+    var(--color-ink) 10px,
+    var(--color-ink) 20px
+  );
+  border-radius: 999px;
+}
+
+/* Plate tab — a diagonally clipped corner badge referencing a weight-plate
+   label, used to tag cards with a short piece of structural metadata
+   (day, tier, status) rather than as pure decoration. */
+.plate-tab {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem 0.2rem 0.5rem;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+}
+
+.focus-ring {
+  outline: none;
+}
+.focus-ring:focus-visible {
+  outline: 2px solid var(--color-hazard);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

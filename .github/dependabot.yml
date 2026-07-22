@@ -1,0 +1,66 @@
+version: 2
+updates:
+  - package-ecosystem: maven
+    directory: /gateway
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: maven
+    directory: /server-administrator
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: maven
+    directory: /server-informations
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: maven
+    directory: /server-register
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: maven
+    directory: /web-page
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: npm
+    directory: /monster-gym-frontend/monster-gym-frontend
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: docker
+    directory: /gateway
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: docker
+    directory: /server-administrator
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: docker
+    directory: /server-informations
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: docker
+    directory: /server-register
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: docker
+    directory: /web-page
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: docker
+    directory: /monster-gym-frontend/monster-gym-frontend
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

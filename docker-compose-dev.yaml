@@ -366,45 +366,58 @@ services:
       retries: 8
       start_period: 45s
 
-  # Zookeeper
-  zookeeper:
-    image: confluentinc/cp-zookeeper:latest
-    container_name: zookeeper
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
+  # Frontend (built locally, unlike the other services here which pull
+  # pre-published joshua76i/* images - it has no Docker Hub image yet).
+  frontend:
+    build:
+      context: ./monster-gym-frontend/monster-gym-frontend
+    container_name: gym-frontend
     ports:
-      - 22181:2181
+      - "5173:8080"
+    depends_on:
+      gateway:
+        condition: service_healthy
     networks:
-      - data-network
-    restart: unless-stopped
-    mem_limit: 512m
+      - app-network
+    restart: on-failure
+    mem_limit: 256m
     cpus: 0.5
     logging: *default-logging
     <<: *default-security
     healthcheck:
-      test: ["CMD-SHELL", "cub zk-ready localhost:2181 5000 || exit 1"]
-      interval: 10s
-      timeout: 8s
-      retries: 6
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://127.0.0.1:8080/ || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
       start_period: 20s
 
+  # Kafka (KRaft mode - no Zookeeper, single node acts as broker + controller.
+  # Was a Zookeeper-backed single broker, which only added Zookeeper's own
+  # operational overhead without buying any real fault tolerance on one
+  # Docker host - same reasoning as food-ordering-system's migration.)
   kafka:
-    image: confluentinc/cp-kafka:latest
+    image: apache/kafka:4.2.0
     container_name: kafka
-    depends_on:
-      zookeeper:
-        condition: service_healthy
+    hostname: kafka
     ports:
       - 29092:29092
     environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093,PLAINTEXT_HOST://0.0.0.0:29092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_CREATE_TOPICS: "flow:1:1" # Topic name: "flow", 1 partition, replication factor 1
+      CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qg"
+      # apache/kafka's image has no KAFKA_CREATE_TOPICS wrapper (that was a
+      # Confluent-image-only convenience script) - Kafka's own
+      # auto.create.topics.enable defaults to true, so "flow" is created the
+      # first time server-register/web-page produce/consume it.
+    volumes:
+      - kafka-data-pr2:/var/lib/kafka/data
     networks:
       - data-network
     restart: unless-stopped
@@ -413,7 +426,7 @@ services:
     logging: *default-logging
     <<: *default-security
     healthcheck:
-      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092 || exit 1"]
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 || exit 1"]
       interval: 15s
       timeout: 10s
       retries: 8
@@ -429,3 +442,4 @@ volumes:
   redis-data-pr2: {}  # Custom volume name
   mysql-data-pr2: {}
   keycloak-data-pr2: {}
+  kafka-data-pr2: {}
