@@ -38,10 +38,13 @@ public interface WorkClassRepository extends ReactiveCrudRepository<WorkClass, L
             @Param("limit") int limit,
             @Param("offset") int offset);
 
+    // trainers_class.id_detail references detail_class_trainer(id), not detail_user(id) -
+    // see init.sql. detail_class_trainer has the same columns as detail_user, so it still
+    // maps onto the DetailUser projection correctly.
     @Query("""
             SELECT d.*
             FROM trainers_class c
-            JOIN detail_user d ON c.id_detail = d.id
+            JOIN detail_class_trainer d ON c.id_detail = d.id
             JOIN trainer_class_work_class cwc ON c.id = cwc.trainer_class_id
             JOIN work_class wc ON cwc.work_class_id = wc.id
             WHERE wc.id = :workClassId
