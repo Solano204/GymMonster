@@ -10,6 +10,10 @@ import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.MountableFile;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.List;
 
 /**
@@ -46,6 +50,38 @@ public abstract class R2dbcContainerTest {
 
     static {
         mysql.start();
+        awaitSchemaReady();
+    }
+
+    // The "ready for connections" log-message wait above only proves the server accepts
+    // connections, not that docker-entrypoint-initdb.d/init.sql has actually finished running
+    // against it - the two normally happen in the right order, but on a slower/more contended
+    // CI runner the schema can still be mid-creation for a moment after the port opens, so
+    // truncating "membership" (or any of TABLES) here occasionally hits "table doesn't exist yet"
+    // (observed as intermittent CI-only failures that never reproduced locally). Polling for the
+    // last table init.sql creates via a real synchronous JDBC query - not R2DBC, this runs once
+    // in a static initializer before Spring's reactive machinery exists - removes the guesswork.
+    private static void awaitSchemaReady() {
+        long deadline = System.currentTimeMillis() + 30_000;
+        SQLException lastError = null;
+        while (System.currentTimeMillis() < deadline) {
+            try (Connection conn = DriverManager.getConnection(mysql.getJdbcUrl(), mysql.getUsername(), mysql.getPassword())) {
+                try (ResultSet rs = conn.getMetaData().getTables(null, null, "Inscription", null)) {
+                    if (rs.next()) {
+                        return;
+                    }
+                }
+            } catch (SQLException e) {
+                lastError = e;
+            }
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("Interrupted while waiting for init.sql to finish", e);
+            }
+        }
+        throw new IllegalStateException("init.sql did not finish creating the schema within 30s", lastError);
     }
 
     @DynamicPropertySource
