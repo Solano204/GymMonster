@@ -1,6 +1,6 @@
 # FIRST STAGE: Building stage
 # Here I create the JAR with the necessary files such as pom.xml, mvnw, and other dependencies, and generate the JAR
-FROM eclipse-temurin:21-jdk AS builder
+FROM eclipse-temurin:25-jdk AS builder
 WORKDIR /app/server-administrator-service
 
 # Copy the main pom.xml
@@ -24,7 +24,7 @@ RUN ./mvnw clean package -DskipTests
 
 # SECOND STAGE: Creating the final Docker image
 # Here I only copy the JAR created in the first stage, making the image lightweight
-FROM eclipse-temurin:21-jre
+FROM eclipse-temurin:25-jre
 
 WORKDIR /app
 
