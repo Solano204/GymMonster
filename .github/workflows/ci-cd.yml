@@ -87,8 +87,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # npm audit's --audit-level check hits registry.npmjs.org's own security-audit
+      # endpoint over the network, separate from the package registry itself - a
+      # transient 504/timeout there fails the step with no real vulnerability found,
+      # indistinguishable from a real finding without retrying. A genuine critical
+      # finding is deterministic and still fails after exhausting retries.
       - name: Security audit (critical only)
-        run: npm audit --audit-level=critical
+        run: |
+          for i in 1 2 3; do
+            npm audit --audit-level=critical && exit 0
+            echo "npm audit attempt $i failed (possibly a transient registry error) - retrying in 10s..."
+            sleep 10
+          done
+          exit 1
 
       - name: Lint
         run: npm run lint

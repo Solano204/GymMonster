@@ -22,6 +22,9 @@ Secrets/app_bd-secret.yaml
 # Local docker-compose secrets — copy .env.example to .env and fill in real values
 .env
 
+# docker-compose-prod.yaml's Docker secrets — create these locally, never commit
+compose-secrets/
+
 # JMeter run artifacts (results, logs, generated HTML dashboards)
 jmeter.log
 jmeter/*.jtl

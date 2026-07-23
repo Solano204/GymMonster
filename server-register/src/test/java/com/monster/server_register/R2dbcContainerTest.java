@@ -10,6 +10,10 @@ import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.MountableFile;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.List;
 
 /**
@@ -46,6 +50,38 @@ public abstract class R2dbcContainerTest {
 
     static {
         mysql.start();
+        awaitSchemaReady();
+    }
+
+    // The "ready for connections" log-message wait above only proves the server accepts
+    // connections, not that docker-entrypoint-initdb.d/init.sql has actually finished running
+    // against it - the two normally happen in the right order, but on a slower/more contended
+    // CI runner the schema can still be mid-creation for a moment after the port opens, so
+    // truncating "membership" (or any of TABLES) here occasionally hits "table doesn't exist yet"
+    // (observed as intermittent CI-only failures that never reproduced locally). Polling for the
+    // last table init.sql creates via a real synchronous JDBC query - not R2DBC, this runs once
+    // in a static initializer before Spring's reactive machinery exists - removes the guesswork.
+    private static void awaitSchemaReady() {
+        long deadline = System.currentTimeMillis() + 30_000;
+        SQLException lastError = null;
+        while (System.currentTimeMillis() < deadline) {
+            try (Connection conn = DriverManager.getConnection(mysql.getJdbcUrl(), mysql.getUsername(), mysql.getPassword())) {
+                try (ResultSet rs = conn.getMetaData().getTables(null, null, "Inscription", null)) {
+                    if (rs.next()) {
+                        return;
+                    }
+                }
+            } catch (SQLException e) {
+                lastError = e;
+            }
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("Interrupted while waiting for init.sql to finish", e);
+            }
+        }
+        throw new IllegalStateException("init.sql did not finish creating the schema within 30s", lastError);
     }
 
     @DynamicPropertySource
@@ -65,15 +101,17 @@ public abstract class R2dbcContainerTest {
 
     // The database now lives for the whole suite (see the singleton-container comment above),
     // so every test class sharing it needs a clean slate of its own instead of relying on
-    // whatever a previous class's tests happened to leave behind - especially since most of
-    // these fixtures use small hardcoded ids that collide across classes once the schema isn't
-    // recreated per class anymore. FK checks are disabled around the truncation since these
-    // tables reference each other and TRUNCATE order would otherwise matter.
+    // whatever a previous class's tests happened to leave behind. DELETE, not TRUNCATE: MySQL/
+    // InnoDB refuses TRUNCATE TABLE on a table referenced by another table's FOREIGN KEY
+    // regardless of FOREIGN_KEY_CHECKS (a documented MySQL limitation, not something this
+    // setting controls) - only DELETE actually respects FOREIGN_KEY_CHECKS=0 here. No test
+    // relies on AUTO_INCREMENT restarting at 1 (every fixture reads back its generated id
+    // rather than assuming one), so losing TRUNCATE's counter reset is fine.
     @BeforeEach
     void resetDatabase() {
         databaseClient.sql("SET FOREIGN_KEY_CHECKS = 0").fetch().rowsUpdated().block();
         for (String table : TABLES) {
-            databaseClient.sql("TRUNCATE TABLE " + table).fetch().rowsUpdated().block();
+            databaseClient.sql("DELETE FROM " + table).fetch().rowsUpdated().block();
         }
         databaseClient.sql("SET FOREIGN_KEY_CHECKS = 1").fetch().rowsUpdated().block();
     }
