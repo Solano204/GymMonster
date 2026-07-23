@@ -101,15 +101,17 @@ public abstract class R2dbcContainerTest {
 
     // The database now lives for the whole suite (see the singleton-container comment above),
     // so every test class sharing it needs a clean slate of its own instead of relying on
-    // whatever a previous class's tests happened to leave behind - especially since most of
-    // these fixtures use small hardcoded ids that collide across classes once the schema isn't
-    // recreated per class anymore. FK checks are disabled around the truncation since these
-    // tables reference each other and TRUNCATE order would otherwise matter.
+    // whatever a previous class's tests happened to leave behind. DELETE, not TRUNCATE: MySQL/
+    // InnoDB refuses TRUNCATE TABLE on a table referenced by another table's FOREIGN KEY
+    // regardless of FOREIGN_KEY_CHECKS (a documented MySQL limitation, not something this
+    // setting controls) - only DELETE actually respects FOREIGN_KEY_CHECKS=0 here. No test
+    // relies on AUTO_INCREMENT restarting at 1 (every fixture reads back its generated id
+    // rather than assuming one), so losing TRUNCATE's counter reset is fine.
     @BeforeEach
     void resetDatabase() {
         databaseClient.sql("SET FOREIGN_KEY_CHECKS = 0").fetch().rowsUpdated().block();
         for (String table : TABLES) {
-            databaseClient.sql("TRUNCATE TABLE " + table).fetch().rowsUpdated().block();
+            databaseClient.sql("DELETE FROM " + table).fetch().rowsUpdated().block();
         }
         databaseClient.sql("SET FOREIGN_KEY_CHECKS = 1").fetch().rowsUpdated().block();
     }
