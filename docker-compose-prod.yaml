@@ -1,0 +1,632 @@
+# ── GymMonster: production-style compose file ───────────────────────────────
+# Companion to docker-compose-dev.yaml, not a replacement — dev stays the
+# fast-iteration path (host-ported infra, .env-based passwords). This file
+# is what you bring up to actually TEST the system the way it would run
+# outside your machine, following the same "production-style single file"
+# convention already established in food-ordering-system's
+# infrastructure/docker-compose/docker-compose.yml (see that file's header).
+#
+# What changed vs. docker-compose-dev.yaml:
+#   - Docker secrets (file-based) replace .env passwords for mysql,
+#     db-keycloak, keycloak admin, and redis. Nothing sensitive is baked
+#     into `${VAR}` compose-time interpolation anymore, so `docker inspect`
+#     on any of these containers no longer leaks a plaintext password (dev's
+#     mysql healthcheck did this — `-p${MYSQL_ROOT_PASSWORD}` gets
+#     substituted at parse time and lands in the container's inspectable
+#     config). Here every password is read at container-runtime via
+#     `$(cat /run/secrets/<name>)`, either in the service's own command or
+#     via a *_FILE env var the base image supports natively (mysql,
+#     postgres).
+#   - Host ports dropped for anything that isn't a direct test target or a
+#     human-facing dashboard: mysql, db-keycloak, redis, kafka, and the
+#     config server are internal-only now (app-network/data-network only).
+#     Kept published: gateway (8081), web-page (8903), server-administrator
+#     (8900), information-service (8111), keycloak (8181), frontend (5173)
+#     — these are exactly what gym-monster.postman_collection.json hits
+#     directly, so testing against this file works the same way it does
+#     against dev. Also kept: eureka (8761) and zipkin (9412), both
+#     human-facing dashboards, same reasoning food-ordering-system's prod
+#     file keeps kafka-ui/grafana/prometheus published. server-register has
+#     no published port in either file's testing surface — it's a pure
+#     Kafka consumer (see KAFKA_NOTES.md), nothing calls it over HTTP
+#     directly.
+#   - Zipkin published as 9412, not the usual 9411: furniture_store's
+#     frontend/docker-compose.yaml also publishes 9411, and you run that
+#     stack alongside this one — same host, same port, second one up just
+#     fails to bind. Everything else here (8081/8761/8181/8900/8111/8903/
+#     5173) was checked against furniture_store's ports (27017, 5432, 9411,
+#     8080, 3000) and doesn't collide.
+#     Heads-up, not fixed here since you didn't ask about this stack right
+#     now: food-ordering-system's prod compose also publishes 9411 (zipkin),
+#     8181 (order-service — collides with this file's keycloak), and 5173
+#     (frontend — collides with this file's frontend). Fine as long as you
+#     never run GYM_MOSTER prod and food-ordering-system prod at the same
+#     time; say the word if you want those repointed too.
+#   - Trace sampling dropped to 10% (MANAGEMENT_TRACING_SAMPLING_PROBABILITY)
+#     via env var override — same 1.0-in-dev/0.1-in-prod split
+#     TRACING_NOTES.md documents, and the same knob food-ordering-system's
+#     prod file uses. This overrides application.properties' hardcoded
+#     1.0 without touching source.
+#   - server-register and information-service had
+#     `logging.level.io.r2dbc=DEBUG` / `...data.r2dbc=DEBUG` hardcoded in
+#     their *main* application.properties (not just application-test) —
+#     that logs full SQL + bound parameters on every query. Fine for local
+#     dev, not something you want in a log you're treating as
+#     production-representative (volume + risk of sensitive values in
+#     logs). Overridden to INFO here via env var, same mechanism as the
+#     tracing sampling override above.
+#   - Image references parametrized as ${SERVICE_IMAGE:-joshua76i/...:latest}
+#     so you can point at a versioned/private registry tag later by setting
+#     one env var, without editing this file. Still defaults to the same
+#     `:latest` images dev uses — worth eventually moving to real version
+#     tags (Steps to deploy the Project in docker .txt currently only ever
+#     pushes `:latest`), flagged here, not fixed, since that's a build/CI
+#     change outside this file's scope.
+#   - Separate container names, network names and volume names (all
+#     `-prod` suffixed) from docker-compose-dev.yaml, so the two stacks
+#     don't collide if you tear one down and bring up the other without a
+#     full `docker compose down -v` first. They still can't run
+#     *simultaneously* — both publish the same host ports (8081, 8903,
+#     etc.), by design, so gym-monster.postman_collection.json doesn't need
+#     separate URLs per file.
+#   - Keycloak stays in `start-dev` for now (see the commented-out
+#     production-mode block on the keycloak service below) — switching to
+#     `start` needs KC_HOSTNAME/KC_HTTP_ENABLED/KC_HOSTNAME_STRICT tuning
+#     that's easy to get subtly wrong and untested here (this file isn't
+#     run by the assistant that wrote it — see feedback memory on that).
+#     Breaking Keycloak breaks every auth-gated flow, so the default stays
+#     on the already-proven-working mode; flip it once you've verified the
+#     production block against your own run.
+#   - Healthcheck budgets widened for db-keycloak, eureka-server, mysql,
+#     keycloak and kafka after a real first run: with 6+ images pulling
+#     cold and the frontend building at the same time, mysql alone took
+#     76s to go healthy against a 110s budget, and db-keycloak/eureka blew
+#     past their (tighter, carried over unchanged from dev) budgets and got
+#     reported unhealthy — not a config error, just not enough runway for a
+#     cold multi-image start, worse now that you're running this alongside
+#     furniture_store on the same machine. If db-keycloak or eureka still
+#     report unhealthy after this, that's a real failure, not a timing one —
+#     paste `docker compose -f docker-compose-prod.yaml logs db-keycloak
+#     eureka-server` and it's worth a look.
+#   - Real bug, not timing: all 7 custom joshua76i/* images (eureka,
+#     config-server, gateway, server-administrator, information-service,
+#     server-register, web-page) have no `wget` at all - confirmed by
+#     `docker run --rm --entrypoint sh <image> -c "command -v wget"`
+#     against every one of them. Their healthchecks (copied from
+#     docker-compose-dev.yaml, which has the identical bug) always failed,
+#     which is exactly what blocked eureka from ever reporting healthy and
+#     cascaded into every dependent service staying stuck at "Created".
+#     Confirmed via `docker inspect eureka-container-prod --format
+#     '{{json .State.Health}}'` - "wget: command not found" on every
+#     attempt, even though the app itself had started fine 67s earlier.
+#     All 7 use `curl` instead now (present in all 7 images, verified the
+#     same way). docker-compose-dev.yaml has this exact same bug and hasn't
+#     been touched - flag if you want it fixed there too.
+#
+# ONE-TIME SETUP (compose-secrets/ is gitignored, nothing here is committed):
+#   New-Item -ItemType Directory -Force compose-secrets | Out-Null
+#   'put a real value here' | Set-Content -NoNewline compose-secrets/mysql_root_password.txt
+#   'put a real value here' | Set-Content -NoNewline compose-secrets/keycloak_db_password.txt
+#   'put a real value here' | Set-Content -NoNewline compose-secrets/keycloak_admin_password.txt
+#   'put a real value here' | Set-Content -NoNewline compose-secrets/redis_password.txt
+#
+# USAGE:
+#   docker compose -f docker-compose-prod.yaml up -d
+#   docker compose -f docker-compose-prod.yaml down        # add -v to also drop the -prod volumes
+# ═════════════════════════════════════════════════════════════════════════
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-security: &default-security
+  security_opt:
+    - no-new-privileges:true
+
+secrets:
+  mysql_root_password:
+    file: ./compose-secrets/mysql_root_password.txt
+  keycloak_db_password:
+    file: ./compose-secrets/keycloak_db_password.txt
+  keycloak_admin_password:
+    file: ./compose-secrets/keycloak_admin_password.txt
+  redis_password:
+    file: ./compose-secrets/redis_password.txt
+  config_server_git_token:
+    file: ./compose-secrets/config_server_git_token.txt
+
+services:
+  # MySQL
+  mysql:
+    image: mysql:8
+    container_name: mysql-server-prod
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
+      MYSQL_DATABASE: mscv_information
+    networks:
+      data-network:
+        # information-service and server-register don't get their DB host
+        # from Spring Cloud Config - it's hardcoded as a *default* literally
+        # in their own bundled application.properties
+        # (spring.r2dbc.url=...mysql-server:3306...), copied from whatever
+        # dev's container_name was, not the compose service name. Confirmed
+        # via a real NXDOMAIN failure in information-service's logs the
+        # first time this stack came up with container_name renamed to
+        # mysql-server-prod. Alias, not a rename, so mysql-server-prod stays
+        # the actual container identity (dev/prod isolation intact).
+        aliases:
+          - mysql-server
+    volumes:
+      - mysql-data-pr2-prod:/var/lib/mysql
+    secrets:
+      - mysql_root_password
+    restart: always
+    mem_limit: 768m
+    cpus: 1.0
+    logging: *default-logging
+    <<: *default-security
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p\"$(cat /run/secrets/mysql_root_password)\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 45s
+
+  # Keycloak — see header note: stays in start-dev by design for now.
+  keycloak:
+    container_name: keycloak-prod
+    image: quay.io/keycloak/keycloak:21.0.2
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >
+        export KEYCLOAK_ADMIN_PASSWORD="$(cat /run/secrets/keycloak_admin_password)" &&
+        export DB_PASSWORD="$(cat /run/secrets/keycloak_db_password)" &&
+        exec /opt/keycloak/bin/kc.sh start-dev
+      # Production-mode alternative (opt-in, untested here — read the header
+      # note before switching):
+      #   export KEYCLOAK_ADMIN_PASSWORD="$(cat /run/secrets/keycloak_admin_password)" &&
+      #   export DB_PASSWORD="$(cat /run/secrets/keycloak_db_password)" &&
+      #   exec /opt/keycloak/bin/kc.sh start --http-enabled=true
+      #     --hostname-strict=false --hostname-strict-https=false
+    ports:
+      - "8181:8181"
+    depends_on:
+      db-keycloak:
+        condition: service_healthy
+    environment:
+      DB_VENDOR: POSTGRES
+      DB_ADDR: db-keycloak
+      DB_DATABASE: db_keycloak
+      DB_PORT: 5433
+      DB_USER: uncledave
+      KEYCLOAK_ADMIN: admin
+      KC_HTTP_PORT: 8181
+    networks:
+      - data-network
+      - app-network
+    volumes:
+      - keycloak-data-pr2-prod:/opt/keycloak/data
+    secrets:
+      - keycloak_admin_password
+      - keycloak_db_password
+    restart: always
+    mem_limit: 1g
+    cpus: 1.0
+    logging: *default-logging
+    <<: *default-security
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8181 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+
+  # PostgreSQL for Keycloak
+  db-keycloak:
+    container_name: db-keycloak-prod
+    image: postgres:15.2
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: db_keycloak
+      POSTGRES_USER: uncledave
+      POSTGRES_PASSWORD_FILE: /run/secrets/keycloak_db_password
+    # See docker-compose-dev.yaml's header note - without this the container
+    # listens on the default 5432, not the 5433 everything else here assumes.
+    command: ["-p", "5433"]
+    networks:
+      - data-network
+    secrets:
+      - keycloak_db_password
+    mem_limit: 512m
+    cpus: 0.5
+    logging: *default-logging
+    <<: *default-security
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U uncledave -d db_keycloak -p 5433"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # Eureka Server — dashboard kept published, same reasoning as zipkin below.
+  eureka-server:
+    image: ${EUREKA_IMAGE:-joshua76i/eurecka-pr2:latest}
+    container_name: eureka-container-prod
+    ports:
+      - "8761:8761"
+    networks:
+      - app-network
+    restart: on-failure
+    mem_limit: 512m
+    cpus: 0.5
+    logging: *default-logging
+    <<: *default-security
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8761/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 12
+      start_period: 45s
+
+  # Config Server — no UI, nothing tests it directly, internal-only.
+  server-configuration:
+    image: ${CONFIG_SERVER_IMAGE:-joshua76i/config-server-pr2:latest}
+    container_name: config-container-prod
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >
+        export SPRING_CLOUD_CONFIG_SERVER_GIT_PASSWORD="$(cat /run/secrets/config_server_git_token)" &&
+        exec java -jar app-server-configuration.jar
+    environment:
+      # Image's baked-in default pointed at github.com/Solano204/
+      # GymConfigurations, which 404s (gone/renamed). Overridden to the
+      # actual repo. Username is not secret (it's in the URL); the token
+      # is - read from the Docker secret above via the command wrapper.
+      SPRING_CLOUD_CONFIG_SERVER_GIT_URI: https://github.com/Solano204/spring-cloud-config-server-repository.git
+      SPRING_CLOUD_CONFIG_SERVER_GIT_USERNAME: Solano204
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - app-network
+    secrets:
+      - config_server_git_token
+    restart: on-failure
+    mem_limit: 512m
+    cpus: 0.5
+    logging: *default-logging
+    <<: *default-security
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8888/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+      start_period: 30s
+
+  # Spring Cloud Gateway
+  gateway:
+    image: ${GATEWAY_IMAGE:-joshua76i/gateway-project2:latest}
+    container_name: gateway-container-prod
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >
+        export REDIS_PASSWORD="$(cat /run/secrets/redis_password)" &&
+        export SPRING_DATA_REDIS_PASSWORD="$$REDIS_PASSWORD" &&
+        exec java -jar app-apigateway.jar
+    ports:
+      - "8081:8081"
+    environment:
+      ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
+      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: "0.1"
+      # The app's own svc.redis.* properties (custom @Primary bean) already
+      # default correctly to host "redis" - but actuator/health's Redis
+      # indicator connected to localhost:6379 instead (confirmed via a real
+      # RedisConnectionFailureException in the logs), meaning something
+      # else in context wires the *standard* Spring Boot auto-configured
+      # ReactiveRedisConnectionFactory (spring.data.redis.*, unset ->
+      # defaults to localhost) rather than the custom @Primary one. Setting
+      # the standard properties too closes that gap regardless of exactly
+      # which bean actuator is hitting.
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: "6379"
+    depends_on:
+      server-configuration:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - data-network
+      - app-network
+    secrets:
+      - redis_password
+    restart: on-failure
+    mem_limit: 768m
+    cpus: 1.0
+    logging: *default-logging
+    <<: *default-security
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8081/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 90s
+
+  # Redis — internal cache/session store for gateway, not a direct test
+  # target, so no host port here (unlike dev).
+  redis:
+    image: redis:alpine3.20
+    container_name: redis-server-prod
+    restart: always
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >
+        exec docker-entrypoint.sh redis-server --loglevel warning
+        --requirepass "$(cat /run/secrets/redis_password)"
+    networks:
+      - data-network
+    volumes:
+      - redis-data-pr2-prod:/data
+    secrets:
+      - redis_password
+    mem_limit: 512m
+    cpus: 0.5
+    logging: *default-logging
+    <<: *default-security
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$(cat /run/secrets/redis_password)\" ping | grep -q PONG || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
+
+  # Zipkin — human-facing UI, kept published like food-ordering-system's.
+  # Host port 9412, not 9411 - see header note (furniture_store also
+  # publishes 9411 and you run both stacks on the same host).
+  zipkin:
+    image: openzipkin/zipkin:3.3
+    container_name: zipkin-prod
+    ports:
+      - "9412:9411"
+    networks:
+      - app-network
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: 0.5
+    logging: *default-logging
+    <<: *default-security
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:9411/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+      start_period: 30s
+
+  # Administrator Service — admin_url in the Postman collection, kept published.
+  server-administrator:
+    image: ${ADMIN_SERVICE_IMAGE:-joshua76i/server-administrator-pr2:latest}
+    container_name: admin-container-prod
+    ports:
+      - "8900:8900"
+    environment:
+      ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
+      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: "0.1"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      server-configuration:
+        condition: service_healthy
+    networks:
+      - data-network
+      - app-network
+    restart: on-failure
+    mem_limit: 768m
+    cpus: 1.0
+    logging: *default-logging
+    <<: *default-security
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8900/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 90s
+
+  # Information Service — info_url in the Postman collection, kept published.
+  information-service:
+    image: ${INFO_SERVICE_IMAGE:-joshua76i/server-information-pr2:latest}
+    container_name: server-info-container-prod
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >
+        export R2DBC_PASSWORD="$(cat /run/secrets/mysql_root_password)" &&
+        exec java -jar app-server-information.jar
+    ports:
+      - "8111:8111"
+    environment:
+      ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
+      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: "0.1"
+      # See header note: main (non-test) application.properties hardcodes
+      # these to DEBUG, which logs every query's SQL + bound parameters.
+      LOGGING_LEVEL_IO_R2DBC: INFO
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_DATA_R2DBC: INFO
+    depends_on:
+      mysql:
+        condition: service_healthy
+      server-configuration:
+        condition: service_healthy
+    networks:
+      - data-network
+      - app-network
+    secrets:
+      - mysql_root_password
+    restart: on-failure
+    mem_limit: 768m
+    cpus: 1.0
+    logging: *default-logging
+    <<: *default-security
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8111/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 90s
+
+  # Register Service — pure Kafka consumer (KAFKA_NOTES.md), nothing in the
+  # Postman collection hits it over HTTP, no published port.
+  server-register:
+    image: ${REGISTER_SERVICE_IMAGE:-joshua76i/server-register-pr2:latest}
+    container_name: server-register-container-prod
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >
+        export R2DBC_PASSWORD="$(cat /run/secrets/mysql_root_password)" &&
+        exec java -jar app-server-register.jar
+    environment:
+      ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
+      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: "0.1"
+      LOGGING_LEVEL_IO_R2DBC: INFO
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_DATA_R2DBC: INFO
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      server-configuration:
+        condition: service_healthy
+    networks:
+      - data-network
+      - app-network
+    secrets:
+      - mysql_root_password
+    restart: on-failure
+    mem_limit: 768m
+    cpus: 1.0
+    logging: *default-logging
+    <<: *default-security
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8902/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 90s
+
+  # Web Page Service — web_page_url in the Postman collection, kept published.
+  web-page:
+    image: ${WEB_PAGE_IMAGE:-joshua76i/web-page-pr2:latest}
+    container_name: web-page-container-prod
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >
+        export REDIS_PASS="$(cat /run/secrets/redis_password)" &&
+        export SPRING_DATA_REDIS_PASSWORD="$$REDIS_PASS" &&
+        exec java -jar app-web-page.jar
+    ports:
+      - "8903:8903"
+    environment:
+      ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
+      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: "0.1"
+      # Same reasoning as gateway's block above: redisConfiguration.java
+      # only wires Redisson, nothing overrides the standard
+      # spring-boot-starter-data-redis-reactive auto-config that actuator's
+      # health indicator uses, so it defaults to localhost unless set here.
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: "6379"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      server-configuration:
+        condition: service_healthy
+    networks:
+      - data-network
+      - app-network
+    secrets:
+      - redis_password
+    restart: on-failure
+    mem_limit: 768m
+    cpus: 1.0
+    logging: *default-logging
+    <<: *default-security
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8903/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 90s
+
+  # Frontend (built locally, same as dev — no Docker Hub image published
+  # yet; `image:` here just names the build's output so it's ready to push).
+  frontend:
+    build:
+      context: ./monster-gym-frontend/monster-gym-frontend
+    image: ${FRONTEND_IMAGE:-joshua76i/gym-monster-frontend:latest}
+    container_name: gym-frontend-prod
+    ports:
+      - "5173:8080"
+    depends_on:
+      gateway:
+        condition: service_healthy
+    networks:
+      - app-network
+    restart: on-failure
+    mem_limit: 256m
+    cpus: 0.5
+    logging: *default-logging
+    <<: *default-security
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://127.0.0.1:8080/ || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+      start_period: 20s
+
+  # Kafka (KRaft mode) — no host port; every consumer/producer here is
+  # another container on data-network, nothing external needs 29092.
+  kafka:
+    image: apache/kafka:4.2.0
+    container_name: kafka-prod
+    hostname: kafka
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qg"
+    volumes:
+      - kafka-data-pr2-prod:/var/lib/kafka/data
+    networks:
+      - data-network
+    restart: unless-stopped
+    mem_limit: 1g
+    cpus: 1.0
+    logging: *default-logging
+    <<: *default-security
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 50s
+
+networks:
+  data-network:
+    driver: bridge
+    name: gymmonster-data-network-prod
+  app-network:
+    driver: bridge
+    name: gymmonster-app-network-prod
+
+volumes:
+  redis-data-pr2-prod: {}
+  mysql-data-pr2-prod: {}
+  keycloak-data-pr2-prod: {}
+  kafka-data-pr2-prod: {}
