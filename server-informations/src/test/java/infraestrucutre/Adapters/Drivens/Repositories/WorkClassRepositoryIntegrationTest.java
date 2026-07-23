@@ -106,8 +106,11 @@ class WorkClassRepositoryIntegrationTest extends R2dbcContainerTest {
         db.sql("INSERT INTO trainer_class_work_class (trainer_class_id, work_class_id) VALUES (:t, :w)")
                 .bind("t", trainerId).bind("w", workClassId).fetch().rowsUpdated().block();
 
+        // insertTrainerWithDetail actually stores the trainer's detail row in
+        // detail_class_trainer with this prefixed name - the unprefixed name only ever
+        // went into the (correctly) unrelated detail_user row.
         StepVerifier.create(workClassRepository.findAllTrainersByWorkClass(workClassId, 10, 0))
-                .assertNext(detail -> assertThat(detail.getName()).isEqualTo("WcTrainerDetail1"))
+                .assertNext(detail -> assertThat(detail.getName()).isEqualTo("TrainerDetail-WcTrainerDetail1"))
                 .verifyComplete();
     }
 }
