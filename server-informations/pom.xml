@@ -107,7 +107,7 @@
 		<dependency>
     <groupId>org.jboss.resteasy</groupId>
     <artifactId>resteasy-client</artifactId>
-    <version>4.7.9.Final</version> <!-- Align with Keycloak or update if needed -->
+    <version>7.0.2.Final</version> <!-- Align with Keycloak or update if needed -->
 </dependency>
 
 
